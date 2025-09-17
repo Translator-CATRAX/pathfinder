@@ -1,0 +1,45 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pathfinder"
+version = "0.1.0"
+dependencies = [
+    "numpy",
+    "xgboost",
+    "pandas",
+    "seaborn",
+    "matplotlib",
+    "optuna",
+    "scikit-learn",
+]
+
+description = "Pathfinder is designed to identify semantic paths between two biological entities."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "Mohsen Taheri", email = "mohsen.taheri.1989@gmail.com" }
+]
+license = { text = "MIT" }        # or use "file" with LICENSE
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Translator-CATRAX/pathfinder"
+Issues = "https://github.com/Translator-CATRAX/pathfinder/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# Include resource files in the wheel
+"pathfinder.resources" = [
+  "*.pkl",
+  "pathfinder_xgboost_model"
+]
