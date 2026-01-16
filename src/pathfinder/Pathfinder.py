@@ -30,10 +30,11 @@ class Pathfinder:
             dst_node_id,
             src_pinned_node,
             dst_pinned_node,
-            hops_numbers=4,
-            limit=100,
+            hops_numbers=6,
+            limit=500,
             category_constraints=[]
     ):
+        self.logger.info(f"Model release date: 12/01/2025")
         path_finder = BidirectionalPathFinder(
             "MLRepo",
             self.plover_url,
@@ -44,16 +45,16 @@ class Pathfinder:
         paths = path_finder.find_all_paths(
             src_node_id,
             dst_node_id,
-            hops_numbers=hops_numbers
+            hops_numbers=6
         )
 
-        paths = self.remove_block_list(paths)
+        paths = self.remove_block_list(paths, hops_numbers)
 
         if len(category_constraints) > 0:
             paths = self.filter_with_constraint(paths, category_constraints)
 
-        self.logger.info(f"PathFinder found {len(paths)} paths")
         paths = paths[:limit]
+        self.logger.info(f"PathFinder found {len(paths)} paths")
 
         edge_extractor = EdgeExtractorFromPloverDB(
             self.plover_url
@@ -81,11 +82,13 @@ class Pathfinder:
                         break
         return result
 
-    def remove_block_list(self, paths):
+    def remove_block_list(self, paths, hops_numbers):
         result = []
         for path in paths:
             append = True
             path_length = len(path.links)
+            if path_length > hops_numbers + 1:
+                continue
             if path_length > 2:
                 for i in range(1, path_length - 1):
                     node = path.links[i]

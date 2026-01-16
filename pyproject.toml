@@ -4,16 +4,15 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pathfinder"
-version = "0.1.0"
+name = "catrax-pathfinder"
+version = "1.0.0"
 dependencies = [
-    "numpy",
-    "xgboost",
-    "pandas",
+    "numpy==1.26.4",
+    "xgboost==2.1.4",
+    "pandas==2.3.1",
     "seaborn",
     "matplotlib",
     "optuna",
-    "scikit-learn",
 ]
 
 description = "Pathfinder is designed to identify semantic paths between two biological entities."
@@ -41,5 +40,5 @@ where = ["src"]
 # Include resource files in the wheel
 "pathfinder.resources" = [
   "*.pkl",
-  "pathfinder_xgboost_model"
+  "pathfinder_xgboost_model_kg_2_10_2"
 ]

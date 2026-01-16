@@ -1,5 +1,5 @@
 import math
-import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from pathfinder.core.BreadthFirstSearch import BreadthFirstSearch
 from pathfinder.core.model.Node import Node
@@ -35,12 +35,12 @@ class BidirectionalPathFinder:
         bfs_2 = BreadthFirstSearch(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, path_container_2,
                                    self.logger)
 
-        thread_1 = threading.Thread(target=lambda: bfs_1.traverse(node_id_1, hops_numbers_1))
-        thread_2 = threading.Thread(target=lambda: bfs_2.traverse(node_id_2, hops_numbers_2))
-        thread_1.start()
-        thread_2.start()
-        thread_1.join()
-        thread_2.join()
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            f1 = ex.submit(bfs_1.traverse, node_id_1, hops_numbers_1)
+            f2 = ex.submit(bfs_2.traverse, node_id_2, hops_numbers_2)
+
+            f1.result()
+            f2.result()
 
         intersection_list = path_container_1.path_dict.keys() & path_container_2.path_dict.keys()
 
