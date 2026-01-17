@@ -30,7 +30,8 @@ class Pathfinder:
             dst_node_id,
             src_pinned_node,
             dst_pinned_node,
-            hops_numbers=6,
+            hops_numbers=4,
+            max_hops_to_explore=6,
             limit=500,
             category_constraints=[]
     ):
@@ -45,7 +46,7 @@ class Pathfinder:
         paths = path_finder.find_all_paths(
             src_node_id,
             dst_node_id,
-            hops_numbers=6
+            hops_numbers=max_hops_to_explore
         )
 
         paths = self.remove_block_list(paths, hops_numbers)
