@@ -5,11 +5,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "catrax-pathfinder"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
     "numpy==1.26.4",
     "xgboost==2.1.4",
     "pandas==2.3.1",
+    "mysql-connector-python",
     "seaborn",
     "matplotlib",
     "optuna",
