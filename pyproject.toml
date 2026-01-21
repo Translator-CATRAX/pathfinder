@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "catrax-pathfinder"
-version = "1.0.2"
+version = "1.1.0"
 dependencies = [
     "numpy==1.26.4",
     "xgboost==2.1.4",
