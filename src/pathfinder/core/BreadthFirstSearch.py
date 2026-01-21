@@ -38,7 +38,7 @@ class BreadthFirstSearch:
         self.plover_url = plover_url
         self.ngd_url = ngd_url
         self.degree_url = degree_url
-        self.path_container = path_container,
+        self.path_container = path_container
         self.prune_top_k = prune_top_k
         self.degree_threshold = degree_threshold
         self.logger = logger
