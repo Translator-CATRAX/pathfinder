@@ -9,11 +9,13 @@ from pathfinder.core.model.PathContainer import PathContainer
 
 class BidirectionalPathFinder:
 
-    def __init__(self, repository_name, plover_url, ngd_url, degree_url, logger):
+    def __init__(self, repository_name, plover_url, ngd_url, degree_url, prune_top_k, degree_threshold, logger):
         self.repo_name = repository_name
         self.plover_url = plover_url
         self.ngd_url = ngd_url
         self.degree_url = degree_url
+        self.prune_top_k = prune_top_k
+        self.degree_threshold = degree_threshold
         self.logger = logger
 
     def find_all_paths(self, node_id_1, node_id_2, hops_numbers=1):
@@ -29,10 +31,12 @@ class BidirectionalPathFinder:
 
         path_container_1 = PathContainer()
         bfs_1 = BreadthFirstSearch(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, path_container_1,
+                                   self.prune_top_k, self.degree_threshold,
                                    self.logger)
 
         path_container_2 = PathContainer()
         bfs_2 = BreadthFirstSearch(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, path_container_2,
+                                   self.prune_top_k, self.degree_threshold,
                                    self.logger)
 
         with ThreadPoolExecutor(max_workers=2) as ex:

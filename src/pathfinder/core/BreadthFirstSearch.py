@@ -2,7 +2,6 @@ import multiprocessing
 
 import queue
 
-from pathfinder.core.constants import NODE_DEGREE_LIMIT, NEIGHBOR_LIMIT
 from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Path import Path
 from pathfinder.core.model.PathFinderModel import PathFinderModel
@@ -18,9 +17,9 @@ def process_path(path_string):
             repo = get_repo(path_finder_model.repo_name, path_finder_model.plover_url, path_finder_model.ngd_url,
                             path_finder_model.degree_url)
             node_degree = repo.get_node_degree(last_link.id)
-            if node_degree > NODE_DEGREE_LIMIT:
+            if node_degree > path_finder_model.degree_threshold:
                 return path_string, result, None
-            neighbors = repo.get_neighbors(last_link, NEIGHBOR_LIMIT)
+            neighbors = repo.get_neighbors(last_link, path_finder_model.prune_top_k)
             for neighbor in neighbors:
                 if neighbor not in path_finder_model.path.links:
                     new_path = path_finder_model.path.make_new_path(neighbor)
@@ -33,12 +32,15 @@ def process_path(path_string):
 
 class BreadthFirstSearch:
 
-    def __init__(self, repository_name, plover_url, ngd_url, degree_url, path_container, logger):
+    def __init__(self, repository_name, plover_url, ngd_url, degree_url, path_container, prune_top_k, degree_threshold,
+                 logger):
         self.repo_name = repository_name
         self.plover_url = plover_url
         self.ngd_url = ngd_url
         self.degree_url = degree_url
-        self.path_container = path_container
+        self.path_container = path_container,
+        self.prune_top_k = prune_top_k
+        self.degree_threshold = degree_threshold
         self.logger = logger
 
     def traverse(self, source_id, hops_numbers=1):
@@ -59,7 +61,7 @@ class BreadthFirstSearch:
                 for _ in range(4 * num_cores):
                     if not path_queue.empty():
                         paths.append(PathFinderModel(self.repo_name, path_queue.get(), self.plover_url, self.ngd_url,
-                                                     self.degree_url).serialize())
+                                                     self.degree_url, self.prune_top_k, self.degree_threshold).serialize())
 
                 new_paths_list = pool.map(process_path, paths)
 

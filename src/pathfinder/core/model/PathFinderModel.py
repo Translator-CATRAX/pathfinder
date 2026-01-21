@@ -3,12 +3,14 @@ import pickle
 
 class PathFinderModel:
 
-    def __init__(self, repo_name, path, plover_url, ngd_url, degree_url):
+    def __init__(self, repo_name, path, plover_url, ngd_url, degree_url, prune_top_k, degree_threshold):
         self.repo_name = repo_name
         self.path = path
         self.plover_url = plover_url
         self.ngd_url = ngd_url
         self.degree_url = degree_url
+        self.prune_top_k = prune_top_k
+        self.degree_threshold = degree_threshold
 
     def serialize(self):
         return pickle.dumps(self)

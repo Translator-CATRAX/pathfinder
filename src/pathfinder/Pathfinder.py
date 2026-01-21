@@ -33,6 +33,8 @@ class Pathfinder:
             hops_numbers=4,
             max_hops_to_explore=6,
             limit=500,
+            prune_top_k=30,
+            degree_threshold=30000,
             category_constraints=[]
     ):
         self.logger.info(f"Model release date: 12/01/2025")
@@ -41,6 +43,8 @@ class Pathfinder:
             self.plover_url,
             self.ngd_url,
             self.degree_url,
+            prune_top_k,
+            degree_threshold,
             self.logger
         )
         paths = path_finder.find_all_paths(
@@ -69,7 +73,6 @@ class Pathfinder:
             "aux",
             edge_extractor
         ).convert(self.logger)
-
 
     def filter_with_constraint(self, paths, category_constraints):
         result = []
