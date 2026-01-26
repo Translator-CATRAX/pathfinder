@@ -1,0 +1,99 @@
+import json
+import logging
+import multiprocessing
+import sqlite3
+import time
+from tqdm import tqdm
+
+from NGDSortedNeighborsRepo import NGDSortedNeighborsRepo
+from PloverDBRepo import PloverDBRepo
+from RedisConnector import RedisConnector
+
+
+def calculate_neighbor_NGD_list(data):
+    try:
+        return data[0], NGDSortedNeighborsRepo(data[3], data[4], data[5]).get_neighbors(data[0], data[1], data[2]), None
+    except Exception as e:
+        logging.error(f"Exception occurred while get_neighbors called with key: {data[0]}")
+        logging.error(f"Exception: {e}")
+        return data[0], None, e
+
+
+def run_ngd_calculation_process(plover_url, curie_to_pmids_path, ngd_db_name, log_of_NGD_normalizer, redis_host, redis_port, redis_db):
+    redis_connector = RedisConnector(redis_host, redis_port, redis_db)
+    repo = PloverDBRepo(plover_url=plover_url)
+    sqlite_connection_write = sqlite3.connect(ngd_db_name)
+    cursor_write = sqlite_connection_write.cursor()
+    cursor_write.execute('''
+        CREATE TABLE IF NOT EXISTS curie_ngd (
+            curie TEXT NOT NULL PRIMARY KEY,
+            ngd TEXT NOT NULL,
+            pmid_length INTEGER NOT NULL DEFAULT 0
+        )
+    ''')
+    cursor_write.close()
+    sqlite_connection_write.close()
+
+    sqlite_connection_read = sqlite3.connect(curie_to_pmids_path)
+    cursor_read = sqlite_connection_read.cursor()
+    num_cores = multiprocessing.cpu_count()
+    batch_size = min(128, num_cores * 10)
+    offset = 0
+
+    cursor_read.execute("SELECT COUNT(*) FROM curie_to_pmids")
+    total_rows = cursor_read.fetchone()[0]
+    pbar = tqdm(
+        total=total_rows,
+        desc="Processing CURIEs",
+        unit="curie",
+        dynamic_ncols=True
+    )
+
+    while True:
+        query = f"SELECT curie, pmids FROM curie_to_pmids LIMIT {batch_size} OFFSET {offset}"
+        cursor_read.execute(query)
+        rows = cursor_read.fetchall()
+        if not rows:
+            break
+        CURIEs = [row[0] for row in rows]
+        try:
+            neighbors_by_curie = repo.get_neighbors(CURIEs)
+        except Exception as e:
+            logging.info(f"get neighbors exception, Error:{e}")
+            time.sleep(5)
+            continue
+        offset += batch_size
+        pbar.update(len(CURIEs))
+
+        CURIEs_and_neighbors = [(curie, neighbors_by_curie[curie], log_of_NGD_normalizer, redis_host, redis_port, redis_db) for curie in CURIEs]
+
+        with multiprocessing.Pool(num_cores) as pool:
+            results = pool.map(calculate_neighbor_NGD_list, CURIEs_and_neighbors)
+
+        curie_pmid_length_zip = redis_connector.get_len_of_keys(CURIEs)
+
+        pmid_length_by_curie = {}
+        for curie, pmid_length in curie_pmid_length_zip:
+            pmid_length_by_curie[curie] = pmid_length
+
+        sqlite_connection_write = sqlite3.connect(ngd_db_name)
+        cursor_write = sqlite_connection_write.cursor()
+
+        for curie, ngds, error in results:
+            if ngds is None:
+                logging.info(f"Error occurred for CURIE: {curie}, Error:{error}")
+                continue
+            ngd_as_text = json.dumps(ngds)
+            if curie in pmid_length_by_curie:
+                pmid_length = pmid_length_by_curie[curie]
+            cursor_write.execute('''
+                INSERT INTO curie_ngd (curie, ngd, pmid_length)
+                VALUES (?, ?, ?)
+            ''', (curie, ngd_as_text, pmid_length))
+
+        sqlite_connection_write.commit()
+        cursor_write.close()
+        sqlite_connection_write.close()
+
+    cursor_read.close()
+    sqlite_connection_read.close()
