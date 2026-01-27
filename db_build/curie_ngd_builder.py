@@ -9,7 +9,8 @@ from pathlib import Path
 import redis
 
 from check_plover_url_compatibility import get_kg2_version_from_plover
-from download_script import ensure_downloaded_and_verified
+from download_script import ensure_downloaded_and_verified, remote_file_exist
+from upload_script import upload_file
 from curie_pmids_into_memory import curie_pmids_into_memory
 from ngd_calculation_process import run_ngd_calculation_process
 
@@ -130,11 +131,14 @@ def parse_args():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     logging.info(f"Start time: {datetime.now()}")
-    logging.info(f"This script will build curie_ngd database")
+
 
     args = parse_args()
 
     version = args.kg_version
+    curie_ngd_db_name = f"curie_ngd_v1.0_KG{version}.sqlite"
+    logging.info(f"This script will try to build curie_ngd database: {curie_ngd_db_name}")
+
     plover_url = args.plover_url
 
     redis_host = args.redis_host
@@ -152,18 +156,32 @@ if __name__ == "__main__":
     ssh_key = args.ssh_key
     ssh_password = args.ssh_password or os.getenv("SSH_PASSWORD")
 
+
+    remote_path_curie_ngd = f"~/KG{version}/{curie_ngd_db_name}"
     out_dir = Path(args.out_dir)
 
+    version_already_exist = remote_file_exist(
+        host=db_host,
+        username=db_username,
+        port=db_port,
+        remote_path=remote_path_curie_ngd,
+        key_path=ssh_key,
+        password=ssh_password,
+    )
+    if not version_already_exist:
+        logging.error(f"{curie_ngd_db_name} already exist at: {db_username}@{db_host}:{remote_path_curie_ngd}")
+        exit(0)
+
     curie_to_pmids_path = f"curie_to_pmids_v1.0_KG{version}.sqlite"
-    local_path = out_dir / curie_to_pmids_path
-    remote_path = f"~/KG{version}/{curie_to_pmids_path}"
+    local_path_curie_pmids = out_dir / curie_to_pmids_path
+    remote_path_curie_pmids = f"~/KG{version}/{curie_to_pmids_path}"
 
     ensure_downloaded_and_verified(
         host=db_host,
         username=db_username,
         port=db_port,
-        remote_path=remote_path,
-        local_path=local_path,
+        remote_path=remote_path_curie_pmids,
+        local_path=local_path_curie_pmids,
         key_path=ssh_key,
         password=ssh_password,
     )
@@ -171,13 +189,24 @@ if __name__ == "__main__":
     plover_version = get_kg2_version_from_plover(plover_url)
 
     if plover_version is None:
-        raise ValueError("Could not determine KG2 version from Plover endpoint")
+        logging.error(f"Could not get KG2 version from PloverDB URL: {plover_url}")
+        exit(0)
     if plover_version != version:
-        raise ValueError(f"KG2 version mismatch: Plover version is {plover_version}, but expected {version}")
-
-    curie_ngd_db_name = f"curie_ngd_v1.0_KG{version}.sqlite"
-    logging.info(f"curie_ngd_db_name: {curie_ngd_db_name}")
+        logging.error(f"KG2 version mismatch: Plover version is {plover_version}, but expected {version}")
+        exit(0)
 
     redis_client = redis.Redis(host=redis_host, port=redis_port, db=redis_db)
     curie_pmids_into_memory(curie_to_pmids_path, version, redis_client)
     run_ngd_calculation_process(plover_url, curie_to_pmids_path, curie_ngd_db_name, log_NGD_normalizer, redis_host, redis_port, redis_db)
+
+    local_path_curie_ngd = out_dir / curie_ngd_db_name
+
+    upload_file(
+        host=db_host,
+        username=db_username,
+        port=db_port,
+        remote_path=remote_path_curie_ngd,
+        local_path=str(local_path_curie_ngd),
+        key_path=ssh_key,
+        password=ssh_password,
+    )

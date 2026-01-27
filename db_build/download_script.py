@@ -1,5 +1,5 @@
-import logging
 import hashlib
+import logging
 from pathlib import Path
 
 import paramiko
@@ -65,6 +65,35 @@ def connect_ssh(
 
     ssh.connect(**kwargs)
     return ssh
+
+
+def remote_file_exist(
+        *,
+        host: str,
+        username: str,
+        port: int,
+        remote_path: str,
+        key_path: str | None = None,
+        password: str | None = None,
+) -> bool:
+    ssh = connect_ssh(
+        host=host,
+        username=username,
+        port=port,
+        key_path=key_path,
+        password=password,
+    )
+    try:
+        sftp = ssh.open_sftp()
+        try:
+            stat = sftp.stat(remote_path)
+            return True
+        except FileNotFoundError:
+            return False
+        finally:
+            sftp.close()
+    except Exception:
+        return False
 
 
 def remote_sha256(ssh: paramiko.SSHClient, remote_path: str) -> str:
