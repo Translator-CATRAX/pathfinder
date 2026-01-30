@@ -1,63 +1,113 @@
-# curie_ngd Database Creation Script
+# curie_ngd_builder
 
-This curie_ngd_builder creates and initializes a sqlite database named **curie_ngd**.
-
----
-
-## 📌 Requirements
-
-- **Python 3.x**
-- Python package: [`redis`](https://redis.io)
-- **Redis server** running on the host machine or any other accessible machine
-- Properly configured **PloverDB** connection
-- Properly downloaded the correct version of curie_to_pmids database
+Builds a `curie_ngd` SQLite database for a specified KG2 version, using a PloverDB instance for KG lookups and Redis as a working cache.
 
 ---
 
-## 🚀 Installation
+## Requirements
 
-### Python Dependencies
+### Redis
+A **running Redis server is required** and must be reachable from the machine running this script.
 
-Install required packages using `pip`:
+Default configuration:
+- Host: `localhost`
+- Port: `6379`
+- DB index: `0`
+
+You can override these using CLI arguments.
+
+### Python packages
+All required Python dependencies are listed in `requirements.txt`. Install them with:
 
 ```bash
-pip install redis
+pip install -r requirements.txt
 ```
 
-## 🖥️ Redis Server
+### SSH access
+The script downloads and uploads SQLite files via SSH.
 
-Make sure the Redis server is installed and running on your machine.
+Authentication options:
+- SSH agent / default keys (recommended)
+- Explicit key file via `--ssh-key`
+- Password via `--ssh-password` or the `SSH_PASSWORD` environment variable
 
 ---
 
-## ⚠️ Important Notes
+## Usage
 
-- Ensure you are connected to the **correct version of PloverDB**.
-- Ensure you have downloaded the **correct version of curie_to_pmids database**.
-- Verify your PloverDB URL and curie_to_pmids database path as logged by the script:
-
-```python
-logging.info(f"curie_to_pmids_path: {curie_to_pmids_path}")
-logging.info(f"PloverDB url: {RTXConfiguration().plover_url}")
-```
-
-## 🔧 Configurable Parameters
-
-You can customize the following parameters in the script:
-
-| Parameter                                                             | Default Value | Description                                      |
-|----------------------------------------------------------------------|---------------|--------------------------------------------------|
-| `redis_host`                                                         | `'localhost'` | Redis server host address                        |
-| `redis_port`                                                         | `6379`        | Redis server port number                         |
-| `redis_db`                                                           | `0`           | Redis database number                            |
-| `number_of_PubMed_citations_and_abstracts_of_biomedical_literature` | `3.5e+7`      | Total number of PubMed citations and abstracts   |
-| `average_MeSH_terms_per_article`                                    | `20`          | Average MeSH terms per PubMed article            |
-| `NGD_normalizer`                                                    | _Computed_    | Calculated as citations × average MeSH terms     |
-
-
-## ▶️ Running the Script
-
-To run the script, execute:
+### Minimal example (mandatory arguments)
 
 ```bash
-python curie_ngd_builder.py
+python curie_ngd_builder.py \
+  --kg-version 2.10.2 \
+  --plover-url https://kg2cploverdb.test.transltr.io
+```
+
+---
+
+## Command-line arguments
+
+### Required
+- `--kg-version VERSION`  
+  Knowledge graph version in `X.Y.Z` format (e.g. `2.10.2`).
+
+- `--plover-url URL`  
+  Base URL of the PloverDB instance.
+
+### Redis options
+- `--redis-host HOST` (default: `localhost`)
+- `--redis-port PORT` (default: `6379`)
+- `--redis-db INDEX` (default: `0`)
+
+### Remote DB host / SSH options
+- `--db-host HOST` (default: `arax-databases.rtx.ai`)
+- `--db-username USER` (default: `rtxconfig`)
+- `--db-port PORT` (default: `22`)
+- `--ssh-key PATH`  
+  Path to SSH private key file (optional).
+- `--ssh-password PASSWORD`  
+  SSH password (optional). Can also be provided via `SSH_PASSWORD`.
+
+### Other options
+- `--out-dir PATH`  
+  Directory where downloaded and generated SQLite files are stored (default: current directory).
+- `--num-pubmed-articles FLOAT`  
+  Number of PubMed citations used for NGD normalization (default: `3.5e7`).
+- `--avg-mesh-terms-per-article INT`  
+  Average number of MeSH terms per article (default: `20`).
+
+---
+
+## Outputs
+
+### Local files
+Stored in `--out-dir`:
+- `curie_to_pmids_v1.0_KG<kg-version>.sqlite`
+- `curie_ngd_v1.0_KG<kg-version>.sqlite`
+
+### Remote upload
+Uploaded to the remote host at:
+```
+~/KG<kg-version>/curie_ngd_v1.0_KG<kg-version>.sqlite
+```
+
+---
+
+## Notes and troubleshooting
+
+- **KG version mismatch**  
+  The script queries PloverDB for its KG2 version and exits if it does not match `--kg-version`.
+
+- **Redis reuse**  
+  Redis stores a `version` key; if it matches the requested KG version, reloading may be skipped.
+
+- **Password-based SSH**  
+  If using passwords instead of keys:
+  ```bash
+  export SSH_PASSWORD="your_password"
+  ```
+
+- **Runtime considerations**  
+  NGD computation can be time-consuming and resource-intensive depending on data size and environment.
+
+---
