@@ -10,6 +10,7 @@ PY_VER="${PY_VER:-3.11.10}"
 # DrugBank credentials (required to programmatically download)
 : "${DRUGBANK_EMAIL:?Set DRUGBANK_EMAIL}"
 : "${DRUGBANK_PASSWORD:?Set DRUGBANK_PASSWORD}"
+: "${KG_VERSION:?Set KG_VERSION (e.g. 2.10.2) in drugbankner.env}"
 
 # ---- Helpers ----
 need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1" >&2; exit 1; }; }
@@ -102,8 +103,8 @@ else
 fi
 
 echo "==> Running pipeline scripts..."
-conda run -n "$ENV_NAME" python perform_NER.py --kg-version $(KG_VERSION)
-conda run -n "$ENV_NAME" python look_for_identifiers.py --kg-version $(KG_VERSION)
+conda run -n "$ENV_NAME" python perform_NER.py --kg-version "$KG_VERSION"
+conda run -n "$ENV_NAME" python look_for_identifiers.py --kg-version "$KG_VERSION"
 
 OUT_JSON="data/DrugBank_aligned_with_KG2.json"
 echo "==> Verifying output: $OUT_JSON"
