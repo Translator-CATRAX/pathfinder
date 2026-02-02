@@ -102,8 +102,8 @@ else
 fi
 
 echo "==> Running pipeline scripts..."
-conda run -n "$ENV_NAME" python perform_NER.py
-conda run -n "$ENV_NAME" python look_for_identifiers.py
+conda run -n "$ENV_NAME" python perform_NER.py --kg-version $(KG_VERSION)
+conda run -n "$ENV_NAME" python look_for_identifiers.py --kg-version $(KG_VERSION)
 
 OUT_JSON="data/DrugBank_aligned_with_KG2.json"
 echo "==> Verifying output: $OUT_JSON"
