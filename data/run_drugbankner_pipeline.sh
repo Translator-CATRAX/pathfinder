@@ -46,7 +46,8 @@ conda run -n "$ENV_NAME" pip install \
   "xmltodict==0.14.2" \
   "pandas==2.2.3" \
   "spacy==3.7.0" \
-  "scispacy==0.5.5"
+  "scispacy==0.5.5" \
+  "paramiko"
 
 echo "==> Installing CuPy (GPU acceleration) if CUDA detected..."
 if command -v nvidia-smi >/dev/null 2>&1; then
