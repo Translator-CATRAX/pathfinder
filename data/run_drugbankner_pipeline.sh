@@ -11,10 +11,6 @@ PY_VER="${PY_VER:-3.11.10}"
 : "${DRUGBANK_EMAIL:?Set DRUGBANK_EMAIL}"
 : "${DRUGBANK_PASSWORD:?Set DRUGBANK_PASSWORD}"
 
-# Node synonymizer inputs (one of these paths should work)
-NODE_SYNONYMIZER_LOCAL="${NODE_SYNONYMIZER_LOCAL:-}"
-NODE_SYNONYMIZER_SCP_SRC="${NODE_SYNONYMIZER_SCP_SRC:-rtxconfig@arax.databases.rtx.ai:/translator/data/orangeboard/databases/KG2.8.4/node_synonymizer_v1.0_KG2.8.4.sqlite}"
-
 # ---- Helpers ----
 need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1" >&2; exit 1; }; }
 
@@ -102,19 +98,6 @@ if [[ -n "$XML_FOUND" ]]; then
 else
   echo "ERROR: No .xml found in data/ after unzip. Check ZIP contents." >&2
   exit 1
-fi
-
-echo "==> Ensuring node synonymizer sqlite is available..."
-TARGET_NS="data/node_synonymizer.sqlite"
-if [[ -f "$TARGET_NS" ]]; then
-  echo "    Found $TARGET_NS; ok."
-elif [[ -n "$NODE_SYNONYMIZER_LOCAL" && -f "$NODE_SYNONYMIZER_LOCAL" ]]; then
-  cp -f "$NODE_SYNONYMIZER_LOCAL" "$TARGET_NS"
-  echo "    Copied from NODE_SYNONYMIZER_LOCAL -> $TARGET_NS"
-else
-  echo "    Attempting scp from: $NODE_SYNONYMIZER_SCP_SRC"
-  scp "$NODE_SYNONYMIZER_SCP_SRC" "$TARGET_NS"
-  echo "    Downloaded -> $TARGET_NS"
 fi
 
 echo "==> Running pipeline scripts..."
