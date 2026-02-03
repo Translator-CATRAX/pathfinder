@@ -8,3 +8,7 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
