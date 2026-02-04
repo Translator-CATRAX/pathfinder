@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+START_DIR="$(pwd -P)"
 # ---- Config (override via env) ----
 REPO_URL="${REPO_URL:-https://github.com/KoslickiLab/DrugBankNER}"
 WORKDIR="${WORKDIR:-$PWD/drugbankner_run}"
@@ -114,3 +115,7 @@ else
   echo "ERROR: Output JSON missing/empty: $OUT_JSON" >&2
   exit 1
 fi
+
+echo "==> Copying output JSON to where you launched the script: $START_DIR"
+cp -f "$OUT_JSON" "$START_DIR/DrugBank_aligned_with_KG2.json"
+echo "    Copied to: $START_DIR/DrugBank_aligned_with_KG2.json"
