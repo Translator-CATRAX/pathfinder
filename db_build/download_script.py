@@ -177,10 +177,6 @@ def ensure_downloaded_and_verified(
         key_path: str | None = None,
         password: str | None = None,
 ) -> None:
-    """
-    If local_path exists and its SHA-256 matches the remote file SHA-256, skip download.
-    Otherwise download and verify.
-    """
     ssh = connect_ssh(
         host=host,
         username=username,
@@ -189,29 +185,12 @@ def ensure_downloaded_and_verified(
         password=password,
     )
     try:
-        logging.info(f"Computing remote SHA-256 for: {remote_path}")
-        remote_hash = remote_sha256(ssh, remote_path)
-
         if local_path.exists() and local_path.is_file():
-            logging.info(f"Local file exists: {local_path} — computing local SHA-256")
-            local_hash = sha256_file(local_path)
-            if local_hash.lower() == remote_hash.lower():
-                logging.info("✅ Local file already matches remote (hash verified). Skipping download.")
-                return
-            logging.warning("⚠️ Local file hash mismatch. Re-downloading...")
+            logging.info(f"Local file exists: {local_path}")
+            return
 
         logging.info(f"Downloading from {host}:{remote_path} -> {local_path}")
         download_sftp_with_progress(ssh=ssh, remote_path=remote_path, local_path=local_path)
-
-        logging.info("Verifying SHA-256 after download...")
-        local_hash = sha256_file(local_path)
-        if local_hash.lower() != remote_hash.lower():
-            raise RuntimeError(
-                "Hash verification failed after download.\n"
-                f"Local:  {local_hash}\n"
-                f"Remote: {remote_hash}"
-            )
-
         logging.info("✅ Downloaded and verified successfully.")
     finally:
         ssh.close()

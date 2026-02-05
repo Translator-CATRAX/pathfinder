@@ -12,3 +12,4 @@ build/
 # PyCharm / IntelliJ
 .idea/
 *.iml
+/biolink/
