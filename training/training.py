@@ -103,7 +103,7 @@ def create_training_data(data_source):
         raise ValueError(f"Data source does not exist: {data_source}")
 
 
-def train(x, y, group):
+def train(x, y, group, kg_version):
     dtrain = xgb.DMatrix(x, label=y)
     dtrain.set_group(group)
     params = {  # hyperparameters extracted from the last hyperparameter-tuning.log
@@ -117,7 +117,7 @@ def train(x, y, group):
         'gamma': 3.87
     }
     bst = xgb.train(params, dtrain, num_boost_round=200)
-    bst.save_model("pathfinder_xgboost_model_kg_2_10_2")
+    bst.save_model(f"pathfinder_xgboost_model_kg_{kg_version}")
     logging.info("Training finished")
 
 
@@ -165,7 +165,7 @@ def shuffle(x, y, group, output_dir, data_source):
     return x_shuffled, y_shuffled, group_shuffled
 
 
-def train_all(output_dir):
+def train_all(output_dir, kg_version):
     x_k, y_k, group_k = load_data(output_dir, KEGG_DATA_SOURCE, shuffled=False)
     x_d, y_d, group_d = load_data(output_dir, DRUGBANK_DATA_SOURCE, shuffled=False)
 
@@ -174,13 +174,13 @@ def train_all(output_dir):
     group = np.concatenate([group_k, group_d])
     x, y, group = shuffle(x, y, group, output_dir, "All")
 
-    train(x, y, group)
+    train(x, y, group, kg_version)
 
 
-def train_on_data_source(output_dir, data_source):
+def train_on_data_source(output_dir, data_source, kg_version):
     x, y, group = load_data(output_dir, data_source, shuffled=False)
     x, y, group = shuffle(x, y, group, output_dir, data_source)
-    train(x, y, group)
+    train(x, y, group, kg_version)
 
 
 def feature_importance():
@@ -334,4 +334,4 @@ if __name__ == "__main__":
     DataCollector(kg_version, args.plover_url, "./", os.path.join(args.out_dir, data_source)).gather_data(
         input_data)
 
-    train_on_data_source(args.out_dir, data_source)
+    train_on_data_source(args.out_dir, data_source, kg_version)
