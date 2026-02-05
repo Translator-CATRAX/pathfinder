@@ -48,18 +48,24 @@ class DataCollector:
             unit="Test data",
             dynamic_ncols=True
         )
-        group = []
-        curie = []
-        curies = []
-        y = []
-        x_list = []
-        for key_nodes_pair in input_data:
-            content_by_curie, curie_category = get_neighbors_info(
-                key_nodes_pair[0],
-                self.ngd_repo,
-                self.plover_repo,
-                self.node_degree_repo
+        counter, group, curie, curies, y, x_list = self.partial_load()
+        pbar.update(counter)
+        for key_nodes_pair in input_data[counter:len(input_data)]:
+            pbar.set_postfix(
+                current=key_nodes_pair[0],
+                status=f"neighbors length: loading"
             )
+            try:
+                content_by_curie, curie_category = get_neighbors_info(
+                    key_nodes_pair[0],
+                    self.ngd_repo,
+                    self.plover_repo,
+                    self.node_degree_repo
+                )
+            except Exception as e:
+                logging.error(f"Error fetching neighbors info for {key_nodes_pair[0]}: {e}")
+                self.partial_save(pbar.n, group, curie, curies, y, x_list)
+                raise e
             if content_by_curie is None:
                 pbar.set_postfix(
                     current=key_nodes_pair[0],
@@ -67,13 +73,13 @@ class DataCollector:
                 )
                 pbar.update(1)
                 continue
-            curie_category_onehot = get_category(curie_category.split(":")[-1], category_to_idx)
-            group.append(len(content_by_curie))
-            curie.append(key_nodes_pair[0])
             pbar.set_postfix(
                 current=key_nodes_pair[0],
                 status=f"neighbors length: {len(content_by_curie)}"
             )
+            curie_category_onehot = get_category(curie_category.split(":")[-1], category_to_idx)
+            group.append(len(content_by_curie))
+            curie.append(key_nodes_pair[0])
             for key, value in content_by_curie.items():
                 if key in key_nodes_pair[1]:
                     y.append(1)
@@ -152,3 +158,46 @@ class DataCollector:
         sorted_category_list = sorted(category_list)
         logging.info("get category to idx finished")
         return {cat_name: idx for idx, cat_name in enumerate(sorted_category_list)}, sorted_category_list
+
+    @staticmethod
+    def partial_save(n, group, curie, curies, y, x_list):
+        logging.info(f"First {n} saved in partial data to start from n")
+        out_dir = Path("partial_data")
+        out_dir.mkdir(exist_ok=True)
+
+        counter_path = Path("counter.txt")
+        counter_path.write_text(str(n))
+
+        data = {
+            "group": group,
+            "curie": curie,
+            "curies": curies,
+            "y": y,
+            "x_list": x_list,
+        }
+
+        for name, arr in data.items():
+            with open(out_dir / f"{name}.pkl", "wb") as f:
+                pickle.dump(arr, f)
+
+    @staticmethod
+    def partial_load():
+        if Path("partial_data").is_dir():
+            logging.info(f"Partial data found")
+            counter = int(Path("counter.txt").read_text())
+            with open("partial_data/group.pkl", "rb") as f:
+                group = pickle.load(f)
+            with open("partial_data/curie.pkl", "rb") as f:
+                curie = pickle.load(f)
+            with open("partial_data/curies.pkl", "rb") as f:
+                curies = pickle.load(f)
+            with open("partial_data/y.pkl", "rb") as f:
+                y = pickle.load(f)
+            with open("partial_data/x_list.pkl", "rb") as f:
+                x_list = pickle.load(f)
+            return counter, group, curie, curies, y, x_list
+        else:
+            logging.info(f"No partial data found")
+            return 0, [], [], [], [], []
+
+
