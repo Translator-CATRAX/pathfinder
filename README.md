@@ -47,8 +47,8 @@ pathfinder = Pathfinder(
 result, aux_graphs, knowledge_graph = pathfinder.get_paths(
     src_node_id="MONDO:0005148",
     dst_node_id="CHEBI:15365",
-    src_pinned_node="MONDO:0005148",
-    dst_pinned_node="CHEBI:15365",
+    src_pinned_node="node_1",
+    dst_pinned_node="node_2",
     hops_numbers=4,
     max_hops_to_explore=6,
     limit=500,
@@ -118,7 +118,7 @@ get_paths(
 - **limit**: Maximum number of paths to return.
 - **prune_top_k**: During each expansion step, neighbors are ranked and only the top `k` are kept for further expansion.
 - **degree_threshold**: Nodes with degree greater than this threshold are not expanded.
-- **category_constraints** *(optional)*: If non-empty, keeps only paths that contain these categories.
+- **category_constraints** *(optional)*: If non-empty, keeps only paths that contain at least one of these categories.
 
 #### Returns
 
@@ -128,7 +128,7 @@ get_paths(
 (result, aux_graphs, knowledge_graph)
 ```
 
-(Exact structures depend on your configured backend and downstream expectations.)
+
 
 ---
 
@@ -166,6 +166,4 @@ Use `mysql:` followed by your MySQL config string.
 
 ---
 
-## License
 
-Add your license text or a link here.
