@@ -18,7 +18,7 @@ def extract_intermediate_nodes(paths):
 
 
 def run_tests(db, pathfinder_type):
-    with open('./data/training.json', 'r') as file:
+    with open('./build_model/data/testing.json', 'r') as file:
         data = json.load(file)
 
     counter = 0
@@ -45,7 +45,7 @@ def run_tests(db, pathfinder_type):
 
 
 def number_of_test_data():
-    with open('./data/training.json', 'r') as file:
+    with open('./build_model/data/testing.json', 'r') as file:
         data = json.load(file)
     counter = 0
     for source, value in data.items():

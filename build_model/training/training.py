@@ -30,7 +30,7 @@ from download_script import ensure_downloaded_and_verified
 
 def split_data(train_percentage=0.8):
     logging.info(f"Split data to train size: {train_percentage}, and test size: {1 - train_percentage}")
-    with open('./data/DrugBank_aligned_with_KG2.json', 'r') as file:
+    with open('./build_model/data/DrugBank_aligned_with_KG2.json', 'r') as file:
         data = json.load(file)
     items = list(data.items())
 
@@ -44,17 +44,17 @@ def split_data(train_percentage=0.8):
     training = dict(dict1_items)
     testing = dict(dict2_items)
 
-    with open('./data/training.json', 'w') as file1:
+    with open('./build_model/data/training.json', 'w') as file1:
         json.dump(training, file1, indent=4)
 
-    with open('./data/testing.json', 'w') as file2:
+    with open('./build_model/data/testing.json', 'w') as file2:
         json.dump(testing, file2, indent=4)
 
     logging.info(f"Data split successfully")
 
 
 def drugbank_training_data():
-    with open('./data/training.json', 'r') as file:
+    with open('./build_model/data/training.json', 'r') as file:
         data = json.load(file)
     training = []
     for key, value in data.items():
@@ -73,7 +73,7 @@ def drugbank_training_data():
 
 
 def kegg_training_data():
-    with open('./data/KEGG.json', 'r') as file:
+    with open('./build_model/data/KEGG.json', 'r') as file:
         data = json.load(file)
     training = []
     for key, value in data.items():
@@ -331,7 +331,7 @@ if __name__ == "__main__":
     )
     split_data()
     input_data = create_training_data(data_source)
-    DataCollector(kg_version, args.plover_url, "./", os.path.join(args.out_dir, data_source)).gather_data(
+    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
         input_data)
 
     train_on_data_source(args.out_dir, data_source, kg_version)

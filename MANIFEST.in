@@ -1,4 +1,1 @@
-recursive-exclude training *
-recursive-exclude db_build *
-recursive-exclude data *
-recursive-exclude testing *
+recursive-exclude build_model *
