@@ -1,12 +1,16 @@
-import pickle
 import logging
+import os
+import pickle
 from pathlib import Path
 
 import numpy as np
-import os
-import sys
-
 from biolink_helper_pkg import BiolinkHelper
+from pathfinder.core.feature_extractor import get_category
+from pathfinder.core.feature_extractor import get_neighbors_info
+from pathfinder.core.feature_extractor import get_np_array_features
+from pathfinder.core.repo.NGDRepository import NGDRepository
+from pathfinder.core.repo.NodeDegreeRepo import NodeDegreeRepo
+from pathfinder.core.repo.PloverDBRepo import PloverDBRepo
 from tqdm import tqdm
 
 from constants import (node_degree_sqlite_prefix_name,
@@ -14,14 +18,6 @@ from constants import (node_degree_sqlite_prefix_name,
                        node_synonymizer_sqlite_prefix_name,
                        BIOLINK_VERSION)
 from node_synonymizer import NodeSynonymizer
-
-
-from pathfinder.core.feature_extractor import get_neighbors_info
-from pathfinder.core.feature_extractor import get_category
-from pathfinder.core.feature_extractor import get_np_array_features
-from pathfinder.core.repo.NGDRepository import NGDRepository
-from pathfinder.core.repo.PloverDBRepo import PloverDBRepo
-from pathfinder.core.repo.NodeDegreeRepo import NodeDegreeRepo
 
 
 class DataCollector:
