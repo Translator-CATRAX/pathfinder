@@ -1,3 +1,4 @@
+from typing import Set
 from pathfinder.core.BidirectionalPathFinder import BidirectionalPathFinder
 
 from pathfinder.converter.EdgeExtractorFromPloverDB import EdgeExtractorFromPloverDB
@@ -8,12 +9,12 @@ class Pathfinder:
 
     def __init__(
             self,
-            repository_name,
-            plover_url,
-            ngd_url,
-            degree_url,
-            blocked_curies,
-            blocked_synonyms,
+            repository_name: str,
+            plover_url: str,
+            ngd_url: str,
+            degree_url: str,
+            blocked_curies: Set[str],
+            blocked_synonyms: Set[str],
             logger
     ):
         self.repo_name = repository_name
@@ -26,17 +27,19 @@ class Pathfinder:
 
     def get_paths(
             self,
-            src_node_id,
-            dst_node_id,
-            src_pinned_node,
-            dst_pinned_node,
-            hops_numbers=4,
-            max_hops_to_explore=6,
-            limit=500,
-            prune_top_k=30,
-            degree_threshold=30000,
-            category_constraints=[]
+            src_node_id: str,
+            dst_node_id: str,
+            src_pinned_node: str,
+            dst_pinned_node: str,
+            hops_numbers: int = 4,
+            max_hops_to_explore: int = 6,
+            limit: int = 500,
+            prune_top_k: int = 30,
+            degree_threshold: int = 30000,
+            category_constraints: Set[str] = None
     ):
+        if category_constraints is None:
+            category_constraints = set()
         self.logger.info(f"Model release date: 12/01/2025")
         path_finder = BidirectionalPathFinder(
             "MLRepo",

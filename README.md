@@ -12,11 +12,19 @@ pip install catrax-pathfinder
 
 ---
 
+## Obtain databases
+
+You will need a compatible curie_ngd_v1.0_KG and kg2c_v1.0_KG SQLite database for the KG version you are using.
+
+- **Recommended**: Ask a team member for mysql urls to these databases
+- **Alternative**: Ask a team member for local copies of these databases
+ 
+
+
 ## Quickstart
 
 ```python
-# If your package exposes Pathfinder at a different import path, adjust accordingly.
-from catrax_pathfinder import Pathfinder  # e.g., from catrax_pathfinder.pathfinder import Pathfinder
+from pathfinder.Pathfinder import Pathfinder
 
 plover_url = "https://kg2cploverdb.ci.transltr.io"
 
@@ -24,12 +32,12 @@ ngd_url = "sqlite:curie_ngd_v1.0_KG2.10.2.sqlite"
 degree_url = "sqlite:kg2c_v1.0_KG2.10.2.sqlite"
 
 # Optional filters
-blocked_curies = [
+blocked_curies = set([
     # "CHEBI:1234",
-]
-blocked_synonyms = [
+])
+blocked_synonyms = set([
     # "aspirin",
-]
+])
 
 # Any logger-like object is acceptable (e.g., a Python logging.Logger)
 logger = None
@@ -68,12 +76,12 @@ Constructor:
 
 ```python
 Pathfinder(
-    repository_name,
-    plover_url,
-    ngd_url,
-    degree_url,
-    blocked_curies,
-    blocked_synonyms,
+    repository_name: str,
+    plover_url: str,
+    ngd_url: str,
+    degree_url: str,
+    blocked_curies: Set[str],
+    blocked_synonyms: Set[str],
     logger,
 )
 ```
@@ -84,8 +92,8 @@ Pathfinder(
 - **plover_url**: URL of the PloverDB endpoint (example: `https://kg2cploverdb.ci.transltr.io`).
 - **ngd_url**: Connection string for the *CURIE-NGD* repository (SQLite or MySQL).
 - **degree_url**: Connection string for the *node degree* repository (SQLite or MySQL).
-- **blocked_curies**: A list of CURIE IDs; any path that passes through these CURIEs is dropped.
-- **blocked_synonyms**: A list of strings; any path that passes through nodes whose names match these values is dropped.
+- **blocked_curies**: A set of CURIE IDs; any path that passes through these CURIEs is dropped.
+- **blocked_synonyms**: A set of strings; any path that passes through nodes whose names match these values is dropped.
 - **logger**: A logger-like object used for logging.
 
 ---
@@ -94,16 +102,16 @@ Pathfinder(
 
 ```python
 get_paths(
-    src_node_id,
-    dst_node_id,
-    src_pinned_node,
-    dst_pinned_node,
-    hops_numbers=4,
-    max_hops_to_explore=6,
-    limit=500,
-    prune_top_k=30,
-    degree_threshold=30000,
-    category_constraints=[],
+    src_node_id: str,
+    dst_node_id: str,
+    src_pinned_node: str,
+    dst_pinned_node: str,
+    hops_numbers: int = 4,
+    max_hops_to_explore: int = 6,
+    limit: int = 500,
+    prune_top_k: int = 30,
+    degree_threshold: int = 30000,
+    category_constraints: Set[str] = None
 )
 ```
 
@@ -122,7 +130,10 @@ get_paths(
 
 #### Returns
 
-`get_paths(...)` returns a 3-tuple:
+`get_paths(...)` returns a 3-tuple of TRAPI-compliant objects.
+
+These correspond to standard Translator Reasoner API (TRAPI) result structures:
+For more details on TRAPI object formats and the overall API specification, see the TRAPI documentation on GitHub: https://github.com/NCATSTranslator/ReasonerAPI
 
 ```python
 (result, aux_graphs, knowledge_graph)
