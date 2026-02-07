@@ -104,6 +104,7 @@ def create_training_data(data_source):
 
 
 def train(x, y, group, kg_version):
+    logging.info("Training started")
     dtrain = xgb.DMatrix(x, label=y)
     dtrain.set_group(group)
     params = {  # hyperparameters extracted from the last hyperparameter-tuning.log
