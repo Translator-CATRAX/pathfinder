@@ -318,7 +318,7 @@ def parse_args():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(f"Start time: {datetime.now()}")
-    data_source = DRUGBANK_DATA_SOURCE
+    data_source = KEGG_DATA_SOURCE
     args = parse_args()
     kg_version = args.kg_version
     download_databases(
@@ -330,9 +330,9 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
-    split_data()
+    # split_data()
     input_data = create_training_data(data_source)
     DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
         input_data)
 
-    train_on_data_source(args.out_dir, data_source, kg_version)
+    # train_on_data_source(args.out_dir, data_source, kg_version)
