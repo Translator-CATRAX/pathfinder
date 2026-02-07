@@ -130,7 +130,7 @@ class DataCollector:
 
     @staticmethod
     def load_edge_category_to_idx():
-        with open((os.path.dirname(os.path.abspath(__file__)) + '/../src/pathfinder/resources/edge_category_to_idx.pkl'),
+        with open('./src/pathfinder/resources/edge_category_to_idx.pkl',
                   "rb") as f:
             return pickle.load(f)
 

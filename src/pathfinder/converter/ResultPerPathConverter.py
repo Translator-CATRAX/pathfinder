@@ -1,9 +1,4 @@
-import os
-import sys
-import json
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from PathConverter import PathConverter
+from pathfinder.converter.PathConverter import PathConverter
 
 
 class ResultPerPathConverter:
@@ -36,7 +31,7 @@ class ResultPerPathConverter:
         i = 0
         for path in self.paths:
             i = i + 1
-            analysis, aux_graph , kg = PathConverter(
+            analysis, aux_graph, kg = PathConverter(
                 path,
                 self.qnode_1_id,
                 self.qnode_2_id,
@@ -48,7 +43,6 @@ class ResultPerPathConverter:
             analyses.append(analysis)
             knowledge_graph['edges'].update(kg['edges'])
             knowledge_graph['nodes'].update(kg['nodes'])
-
 
         result = {
             "id": "result",
