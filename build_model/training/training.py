@@ -23,7 +23,7 @@ from constants import (node_degree_sqlite_prefix_name,
                        DRUGBANK_DATA_SOURCE)
 from data_collector import DataCollector
 from constants import SHUFFLED_DIR
-from build_model.db_build.download_script import ensure_downloaded_and_verified
+from db_build.download_script import ensure_downloaded_and_verified
 
 
 def split_data(train_percentage=0.8):
