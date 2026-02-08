@@ -20,7 +20,8 @@ from constants import (node_degree_sqlite_prefix_name,
                        curie_ngd_sqlite_prefix_name,
                        node_synonymizer_sqlite_prefix_name,
                        KEGG_DATA_SOURCE,
-                       DRUGBANK_DATA_SOURCE)
+                       DRUGBANK_TRAIN_DATA_SOURCE,
+                       DRUGBANK_TEST_DATA_SOURCE)
 from data_collector import DataCollector
 from constants import SHUFFLED_DIR
 from db_build.download_script import ensure_downloaded_and_verified
@@ -51,9 +52,13 @@ def split_data(train_percentage=0.8):
     logging.info(f"Data split successfully")
 
 
-def drugbank_training_data():
-    with open('./build_model/data/training.json', 'r') as file:
-        data = json.load(file)
+def drugbank_data(data_source):
+    if data_source == DRUGBANK_TRAIN_DATA_SOURCE:
+        with open('./build_model/data/training.json', 'r') as file:
+            data = json.load(file)
+    else:
+        with open('./build_model/data/testing.json', 'r') as file:
+            data = json.load(file)
     training = []
     for key, value in data.items():
         related_CURIE = set()
@@ -95,8 +100,10 @@ def kegg_training_data():
 def create_training_data(data_source):
     if data_source == KEGG_DATA_SOURCE:
         return kegg_training_data()
-    elif data_source == DRUGBANK_DATA_SOURCE:
-        return drugbank_training_data()
+    elif data_source == DRUGBANK_TRAIN_DATA_SOURCE:
+        return drugbank_data(DRUGBANK_TRAIN_DATA_SOURCE)
+    elif data_source == DRUGBANK_TEST_DATA_SOURCE:
+        return drugbank_data(DRUGBANK_TEST_DATA_SOURCE)
     else:
         raise ValueError(f"Data source does not exist: {data_source}")
 
@@ -166,11 +173,12 @@ def shuffle(x, y, group, output_dir, data_source):
 
 def train_all(output_dir, kg_version):
     x_k, y_k, group_k = load_data(output_dir, KEGG_DATA_SOURCE, shuffled=False)
-    x_d, y_d, group_d = load_data(output_dir, DRUGBANK_DATA_SOURCE, shuffled=False)
+    x_d, y_d, group_d = load_data(output_dir, DRUGBANK_TRAIN_DATA_SOURCE, shuffled=False)
+    x_d_test, y_d_test, group_d_test = load_data(output_dir, DRUGBANK_TEST_DATA_SOURCE, shuffled=False)
 
-    x = np.vstack([x_k, x_d])
-    y = np.concatenate([y_k, y_d])
-    group = np.concatenate([group_k, group_d])
+    x = np.vstack([x_k, x_d, x_d_test])
+    y = np.concatenate([y_k, y_d, y_d_test])
+    group = np.concatenate([group_k, group_d, group_d_test])
     x, y, group = shuffle(x, y, group, output_dir, "All")
 
     train(x, y, group, kg_version)
@@ -316,7 +324,6 @@ def parse_args():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(f"Start time: {datetime.now()}")
-    data_source = KEGG_DATA_SOURCE
     args = parse_args()
     kg_version = args.kg_version
     download_databases(
@@ -329,8 +336,10 @@ if __name__ == "__main__":
         out_dir_str=args.out_dir
     )
     # split_data()
-    # input_data = create_training_data(data_source)
-    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-    #     input_data)
-    # train_on_data_source(args.out_dir, data_source, kg_version)
+
+    data_source = DRUGBANK_TEST_DATA_SOURCE
+    input_data = create_training_data(data_source)
+    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+        input_data)
+
     train_all(args.out_dir, kg_version)
