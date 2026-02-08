@@ -40,7 +40,6 @@ class Pathfinder:
     ):
         if category_constraints is None:
             category_constraints = set()
-        self.logger.info(f"Model release date: 12/01/2025")
         path_finder = BidirectionalPathFinder(
             "MLRepo",
             self.plover_url,

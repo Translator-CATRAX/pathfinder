@@ -124,7 +124,7 @@ def train(x, y, group, kg_version):
         'gamma': 3.87
     }
     bst = xgb.train(params, dtrain, num_boost_round=200)
-    bst.save_model(f"pathfinder_xgboost_model_kg_{kg_version}")
+    bst.save_model(f"src/pathfinder/resources/pathfinder_xgboost_model_kg_{kg_version}")
     logging.info("Training finished")
 
 
@@ -336,9 +336,14 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
-    # split_data()
+    split_data()
 
     data_source = DRUGBANK_TEST_DATA_SOURCE
+    input_data = create_training_data(data_source)
+    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+        input_data)
+
+    data_source = DRUGBANK_TRAIN_DATA_SOURCE
     input_data = create_training_data(data_source)
     DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
         input_data)

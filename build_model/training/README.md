@@ -20,7 +20,7 @@ nohup env PYTHONPATH=src python build_model/training/training.py \
 ## What gets trained?
 
 - **Model type**: XGBoost Learning-to-Rank (`objective=rank:pairwise`)
-- **Output file**: `pathfinder_xgboost_model_kg_<KG_VERSION>`
+- **Output files**: Model `pathfinder_xgboost_model_kg_<KG_VERSION>` and corresponding data files will be saved in resources directory.
 
 Hyperparameters are currently hard-coded in `train()` and were taken from the last hyperparameter tuning log.
 

@@ -38,6 +38,13 @@ class DataCollector:
         ancestors_by_indices = self.get_ancestors_by_indices(edge_category_to_idx)
         category_to_idx, sorted_category_list = self.get_category_to_idx()
 
+        with open(f"src/pathfinder/resources/ancestors_by_indices.pkl", "wb") as f:
+            pickle.dump(ancestors_by_indices, f)
+        with open(f"src/pathfinder/resources/sorted_category_list.pkl", "wb") as f:
+            pickle.dump(sorted_category_list, f)
+        with open(f"src/pathfinder/resources/node_degree_category_by_indices.pkl", "wb") as f:
+            pickle.dump(degree_category_to_idx, f)
+
         pbar = tqdm(
             total=len(input_data),
             desc="Collecting data",
@@ -108,12 +115,7 @@ class DataCollector:
             pickle.dump(curie, f)
         with open(f"{self.output_directory}/curies.pkl", "wb") as f:
             pickle.dump(curies, f)
-        with open(f"{self.output_directory}/ancestors_by_indices.pkl", "wb") as f:
-            pickle.dump(ancestors_by_indices, f)
-        with open(f"{self.output_directory}/sorted_category_list.pkl", "wb") as f:
-            pickle.dump(sorted_category_list, f)
-        with open(f"{self.output_directory}/node_degree_category_by_indices.pkl", "wb") as f:
-            pickle.dump(degree_category_to_idx, f)
+
 
     def get_degree_category_to_idx(self):
         logging.info("get degree category to idx")
