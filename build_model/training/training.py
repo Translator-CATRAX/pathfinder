@@ -20,6 +20,7 @@ from constants import (node_degree_sqlite_prefix_name,
                        curie_ngd_sqlite_prefix_name,
                        node_synonymizer_sqlite_prefix_name,
                        KEGG_DATA_SOURCE,
+                       DRUGBANK_DATA_SOURCE,
                        DRUGBANK_TRAIN_DATA_SOURCE,
                        DRUGBANK_TEST_DATA_SOURCE)
 from data_collector import DataCollector
@@ -171,15 +172,15 @@ def shuffle(x, y, group, output_dir, data_source):
     return x_shuffled, y_shuffled, group_shuffled
 
 
-def train_all(output_dir, kg_version):
-    x_k, y_k, group_k = load_data(output_dir, KEGG_DATA_SOURCE, shuffled=False)
+def train_all_drugbank(output_dir, kg_version):
+    # x_k, y_k, group_k = load_data(output_dir, KEGG_DATA_SOURCE, shuffled=False)
     x_d, y_d, group_d = load_data(output_dir, DRUGBANK_TRAIN_DATA_SOURCE, shuffled=False)
     x_d_test, y_d_test, group_d_test = load_data(output_dir, DRUGBANK_TEST_DATA_SOURCE, shuffled=False)
 
-    x = np.vstack([x_k, x_d, x_d_test])
-    y = np.concatenate([y_k, y_d, y_d_test])
-    group = np.concatenate([group_k, group_d, group_d_test])
-    x, y, group = shuffle(x, y, group, output_dir, "All")
+    x = np.vstack([x_d, x_d_test])
+    y = np.concatenate([y_d, y_d_test])
+    group = np.concatenate([group_d, group_d_test])
+    x, y, group = shuffle(x, y, group, output_dir, DRUGBANK_DATA_SOURCE)
 
     train(x, y, group, kg_version)
 
@@ -342,4 +343,4 @@ if __name__ == "__main__":
     DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
         input_data)
 
-    train_all(args.out_dir, kg_version)
+    train_all_drugbank(args.out_dir, kg_version)
