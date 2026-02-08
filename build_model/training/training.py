@@ -329,8 +329,8 @@ if __name__ == "__main__":
         out_dir_str=args.out_dir
     )
     # split_data()
-    input_data = create_training_data(data_source)
-    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-        input_data)
-
+    # input_data = create_training_data(data_source)
+    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+    #     input_data)
     # train_on_data_source(args.out_dir, data_source, kg_version)
+    train_all(args.out_dir, kg_version)
