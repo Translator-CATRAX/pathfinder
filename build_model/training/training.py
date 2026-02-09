@@ -336,16 +336,16 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
-    split_data()
-
-    data_source = DRUGBANK_TEST_DATA_SOURCE
-    input_data = create_training_data(data_source)
-    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-        input_data)
-
-    data_source = DRUGBANK_TRAIN_DATA_SOURCE
-    input_data = create_training_data(data_source)
-    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-        input_data)
+    # split_data()
+    #
+    # data_source = DRUGBANK_TEST_DATA_SOURCE
+    # input_data = create_training_data(data_source)
+    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+    #     input_data)
+    #
+    # data_source = DRUGBANK_TRAIN_DATA_SOURCE
+    # input_data = create_training_data(data_source)
+    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+    #     input_data)
 
     train_all_drugbank(args.out_dir, kg_version)
