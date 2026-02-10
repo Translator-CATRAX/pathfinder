@@ -1,8 +1,5 @@
-import sys
-import os
+from pathfinder.converter.PathListToGraphConverter import PathListToGraphConverter
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../")
-from converter.PathListToGraphConverter import PathListToGraphConverter
 
 class GraphToKnowledgeGraphConverter:
 

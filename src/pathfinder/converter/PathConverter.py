@@ -1,8 +1,4 @@
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from GraphToKnowledgeGraphConverter import GraphToKnowledgeGraphConverter
+from pathfinder.converter.GraphToKnowledgeGraphConverter import GraphToKnowledgeGraphConverter
 
 
 class PathConverter:

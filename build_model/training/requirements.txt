@@ -1,0 +1,10 @@
+# Python 3.12
+
+
+xgboost==2.1.4
+biolink-helper-pkg==1.0.0
+numpy
+matplotlib
+tqdm
+optuna
+paramiko
