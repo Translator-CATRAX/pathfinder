@@ -132,14 +132,16 @@ class DataCollector:
 
     @staticmethod
     def load_edge_category_to_idx():
-        with open('./src/pathfinder/resources/edge_category_to_idx.pkl',
-                  "rb") as f:
-            return pickle.load(f)
+        biolink_helper = DataCollector.get_biolink_helper()
+        all_predicates = biolink_helper.get_descendants("biolink:related_to")
+        all_predicates.sort()
+        return {cat_name: idx for idx, cat_name in enumerate(all_predicates)}
 
-    def get_ancestors_by_indices(self, edge_category_to_idx):
+    @staticmethod
+    def get_ancestors_by_indices(edge_category_to_idx):
         logging.info("get ancestors by indices")
         ancestors_by_indices = {}
-        biolink_helper = self.get_biolink_helper()
+        biolink_helper = DataCollector.get_biolink_helper()
         for key, value in edge_category_to_idx.items():
             ancestors = biolink_helper.get_ancestors(key)
             indices_of_ancestors = []

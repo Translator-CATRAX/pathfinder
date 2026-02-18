@@ -57,9 +57,14 @@ def drugbank_data(data_source):
     if data_source == DRUGBANK_TRAIN_DATA_SOURCE:
         with open('./build_model/data/training.json', 'r') as file:
             data = json.load(file)
-    else:
+    elif data_source == DRUGBANK_TEST_DATA_SOURCE:
         with open('./build_model/data/testing.json', 'r') as file:
             data = json.load(file)
+    elif data_source == DRUGBANK_DATA_SOURCE:
+        with open('./build_model/data/DrugBank_aligned_with_KG2.json', 'r') as file:
+            data = json.load(file)
+    else:
+        raise ValueError(f"Data source does not exist: {data_source}")
     training = []
     for key, value in data.items():
         related_CURIE = set()
@@ -105,6 +110,8 @@ def create_training_data(data_source):
         return drugbank_data(DRUGBANK_TRAIN_DATA_SOURCE)
     elif data_source == DRUGBANK_TEST_DATA_SOURCE:
         return drugbank_data(DRUGBANK_TEST_DATA_SOURCE)
+    elif data_source == DRUGBANK_DATA_SOURCE:
+        return drugbank_data(DRUGBANK_DATA_SOURCE)
     else:
         raise ValueError(f"Data source does not exist: {data_source}")
 
@@ -336,16 +343,9 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
-    # split_data()
-    #
-    # data_source = DRUGBANK_TEST_DATA_SOURCE
-    # input_data = create_training_data(data_source)
-    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-    #     input_data)
-    #
-    # data_source = DRUGBANK_TRAIN_DATA_SOURCE
-    # input_data = create_training_data(data_source)
-    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-    #     input_data)
+    data_source = DRUGBANK_DATA_SOURCE
+    input_data = create_training_data(data_source)
+    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+        input_data)
 
-    train_all_drugbank(args.out_dir, kg_version)
+    train_on_data_source(args.out_dir, data_source, kg_version)
