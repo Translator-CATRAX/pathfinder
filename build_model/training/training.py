@@ -76,7 +76,9 @@ def drugbank_data(data_source):
         related_CURIE.update(batch_of_nodes)
 
         for rel in related_CURIE:
-            training.append((rel, related_CURIE))
+            batch = related_CURIE.copy()
+            batch.remove(rel)
+            training.append((rel, batch))
 
     return training
 
