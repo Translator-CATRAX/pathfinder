@@ -361,13 +361,21 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
+    data_source = DRUGBANK_DATA_SOURCE
 
-    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
-
-    # data_source = DRUGBANK_DATA_SOURCE
+    # feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+    #
     # input_data = create_training_data(data_source)
     # logging.info(f"Training on {len(input_data)}")
     # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
     #     input_data, feature_structure)
 
-    # train_on_data_source(args.out_dir, data_source, kg_version)
+    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
+    new_y = []
+    for i in range(len(x)):
+        if y[i] == 1:
+            new_y.append(np.sum(x[i, 60:303]))
+        else:
+            new_y.append(0)
+
+    train(x, new_y, group, kg_version)
