@@ -378,4 +378,4 @@ if __name__ == "__main__":
         else:
             new_y.append(0)
 
-    train(x, new_y, group, kg_version)
+    train(x, np.array(new_y), group, kg_version)
