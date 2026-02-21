@@ -134,7 +134,7 @@ def train(x, y, group, kg_version):
     dtrain.set_group(group)
     params = {  # hyperparameters extracted from the last hyperparameter-tuning.log
         'objective': 'rank:ndcg',
-        'eval_metric': 'ndcg@30',
+        'eval_metric': 'ndcg',
         'eta': 0.24,
         'max_depth': 10,
         'subsample': 0.91,
