@@ -133,7 +133,7 @@ def train(x, y, group, kg_version):
     dtrain = xgb.DMatrix(x, label=y)
     dtrain.set_group(group)
     params = {  # hyperparameters extracted from the last hyperparameter-tuning.log
-        'objective': 'rank:ndcg',
+        'objective': 'rank:pairwise',
         'eval_metric': 'ndcg',
         'eta': 0.24,
         'max_depth': 10,
