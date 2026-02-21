@@ -33,7 +33,7 @@ class FeatureStructure:
         with open(f"src/pathfinder/resources/node_degree_category_by_indices.pkl", "wb") as f:
             pickle.dump(self.degree_category_to_idx, f)
         with open(f"src/pathfinder/resources/edge_category_to_idx.pkl", "wb") as f:
-            pickle.dump(self.degree_category_to_idx, f)
+            pickle.dump(self.edge_category_to_idx, f)
 
     def get_degree_category_to_idx(self):
         logging.info("get degree category to idx")
