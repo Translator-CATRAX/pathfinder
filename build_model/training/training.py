@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from data_loader import load_data
+from biolink_helper_pkg import BiolinkHelper
 
 from constants import (node_degree_sqlite_prefix_name,
                        curie_ngd_sqlite_prefix_name,
@@ -22,8 +23,10 @@ from constants import (node_degree_sqlite_prefix_name,
                        KEGG_DATA_SOURCE,
                        DRUGBANK_DATA_SOURCE,
                        DRUGBANK_TRAIN_DATA_SOURCE,
-                       DRUGBANK_TEST_DATA_SOURCE)
+                       DRUGBANK_TEST_DATA_SOURCE,
+                       BIOLINK_VERSION)
 from data_collector import DataCollector
+from feature_structure import FeatureStructure
 from constants import SHUFFLED_DIR
 from db_build.download_script import ensure_downloaded_and_verified
 
@@ -65,7 +68,7 @@ def drugbank_data(data_source):
             data = json.load(file)
     else:
         raise ValueError(f"Data source does not exist: {data_source}")
-    training = []
+    training = {}
     for key, value in data.items():
         related_CURIE = set()
 
@@ -78,9 +81,16 @@ def drugbank_data(data_source):
         for rel in related_CURIE:
             batch = related_CURIE.copy()
             batch.remove(rel)
-            training.append((rel, batch))
+            if rel in training:
+                training[rel].update(batch)
+            else:
+                training[rel] = batch
+    result = []
 
-    return training
+    for key, value in training.items():
+        result.append((key, value))
+
+    return result
 
 
 def kegg_training_data():
@@ -331,6 +341,12 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_biolink_helper():
+    biolink_cache_dir = "./biolink"
+    pathlib.Path(biolink_cache_dir).mkdir(parents=True, exist_ok=True)
+    return BiolinkHelper(BIOLINK_VERSION, biolink_cache_dir)
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(f"Start time: {datetime.now()}")
@@ -345,9 +361,13 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
-    data_source = DRUGBANK_DATA_SOURCE
-    input_data = create_training_data(data_source)
-    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-        input_data)
 
-    train_on_data_source(args.out_dir, data_source, kg_version)
+    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+
+    # data_source = DRUGBANK_DATA_SOURCE
+    # input_data = create_training_data(data_source)
+    # logging.info(f"Training on {len(input_data)}")
+    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+    #     input_data, feature_structure)
+
+    # train_on_data_source(args.out_dir, data_source, kg_version)
