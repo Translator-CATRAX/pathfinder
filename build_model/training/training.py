@@ -133,7 +133,7 @@ def train(x, y, group, kg_version):
     dtrain = xgb.DMatrix(x, label=y)
     dtrain.set_group(group)
     params = {  # hyperparameters extracted from the last hyperparameter-tuning.log
-        'objective': 'rank:pairwise',
+        'objective': 'rank:ndcg',
         'eval_metric': 'ndcg',
         'eta': 0.24,
         'max_depth': 10,
@@ -363,14 +363,14 @@ if __name__ == "__main__":
     )
     data_source = DRUGBANK_DATA_SOURCE
 
-    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+    # feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+    #
+    # input_data = create_training_data(data_source)
+    # logging.info(f"Training on {len(input_data)}")
+    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+    #     input_data, feature_structure)
 
-    input_data = create_training_data(data_source)
-    logging.info(f"Training on {len(input_data)}")
-    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-        input_data, feature_structure)
-
-    x, y, group = load_data(args.out_dir, data_source, shuffled=False)
+    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
     x, y, group = shuffle(x, y, group, args.out_dir, data_source)
     new_y = []
     for i in range(len(x)):
