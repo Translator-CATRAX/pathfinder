@@ -85,7 +85,7 @@ def drugbank_data(data_source):
         d = set(indication_NER_aligned)
         disease_neighbors = set(mechanistic_intermediate_nodes + [drug])
         for indication in d:
-            if indication not in mechanistic_intermediate_nodes and indication != drug:
+            if indication not in disease_neighbors:
                 if indication in training:
                     training[indication].update(disease_neighbors)
                 else:
@@ -93,7 +93,7 @@ def drugbank_data(data_source):
 
         all_nodes = set(indication_NER_aligned + mechanistic_intermediate_nodes + [drug])
         for mechanism in m:
-            if mechanism != drug:
+            if mechanism != drug and mechanism not in d:
                 batch = all_nodes.copy()
                 batch.remove(mechanism)
                 if mechanism in training:
@@ -379,10 +379,12 @@ if __name__ == "__main__":
     )
     data_source = DRUGBANK_DATA_SOURCE
 
-    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
-
     input_data = create_training_data(data_source)
     logging.info(f"Training on {len(input_data)}")
+
+    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+
+
     DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
         input_data, feature_structure)
 
