@@ -70,21 +70,37 @@ def drugbank_data(data_source):
         raise ValueError(f"Data source does not exist: {data_source}")
     training = {}
     for key, value in data.items():
-        related_CURIE = set()
 
-        batch_of_nodes = [k for k in value["indication_NER_aligned"].keys()]
-        batch_of_nodes.extend([k for k in value["mechanistic_intermediate_nodes"].keys()])
+        indication_NER_aligned = [k for k in value["indication_NER_aligned"].keys()]
+        mechanistic_intermediate_nodes = [k for k in value["mechanistic_intermediate_nodes"].keys()]
+        drug = key
 
-        related_CURIE.add(key)
-        related_CURIE.update(batch_of_nodes)
+        drug_nodes = set(indication_NER_aligned + mechanistic_intermediate_nodes)
+        if drug in training:
+            training[drug].update(drug_nodes)
+        else:
+            training[drug] = drug_nodes
 
-        for rel in related_CURIE:
-            batch = related_CURIE.copy()
-            batch.remove(rel)
-            if rel in training:
-                training[rel].update(batch)
-            else:
-                training[rel] = batch
+        m = set(mechanistic_intermediate_nodes)
+        d = set(indication_NER_aligned)
+        disease_neighbors = set(mechanistic_intermediate_nodes + [drug])
+        for indication in d:
+            if indication not in mechanistic_intermediate_nodes and indication != drug:
+                if indication in training:
+                    training[indication].update(disease_neighbors)
+                else:
+                    training[indication] = disease_neighbors
+
+        all_nodes = set(indication_NER_aligned + mechanistic_intermediate_nodes + [drug])
+        for mechanism in m:
+            if mechanism != drug:
+                batch = all_nodes.copy()
+                batch.remove(mechanism)
+                if mechanism in training:
+                    training[mechanism].update(batch)
+                else:
+                    training[mechanism] = batch
+
     result = []
 
     for key, value in training.items():
