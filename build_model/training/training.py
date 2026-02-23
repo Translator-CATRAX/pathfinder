@@ -378,22 +378,65 @@ if __name__ == "__main__":
         out_dir_str=args.out_dir
     )
     data_source = DRUGBANK_DATA_SOURCE
+    #
+    # input_data = create_training_data(data_source)
+    # logging.info(f"Training on {len(input_data)}")
+    #
+    # feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+    #
+    #
+    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+    #     input_data, feature_structure)
 
-    input_data = create_training_data(data_source)
-    logging.info(f"Training on {len(input_data)}")
-
-    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
 
 
-    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-        input_data, feature_structure)
+    excluded_predicates = {
+        "biolink:related_to",
+        "biolink:related_to_at_concept_level",
+        "biolink:subclass_of",
+        "biolink:close_match",
+        "biolink:broad_match",
+        "biolink:has_member",
+        "biolink:associated_with",
+        "biolink:mentions",
+        "biolink:coexists_with",
+        "biolink:located_in",
+        "biolink:similar_to",
+        "biolink:overlaps",
+        "biolink:has_part",
+        "biolink:related_condition",
+        "biolink:derives_from",
+        "biolink:has_not_completed",
+        "biolink:has_completed",
+        "biolink:lacks_part",
+        "biolink:develops_from",
+        "biolink:in_taxon",
+        "biolink:same_as",
+    }
 
-    x, y, group = load_data(args.out_dir, data_source, shuffled=False)
-    x, y, group = shuffle(x, y, group, args.out_dir, data_source)
+    with open("src/pathfinder/resources/edge_category_to_idx.pkl", "rb") as f:
+        edge_category_to_idx = pickle.load(f)
+
+    logging.info(edge_category_to_idx)
+
+    excluded_indices = {
+        edge_category_to_idx[p]
+        for p in excluded_predicates
+        if p in edge_category_to_idx
+    }
+
+    start, end = 60, 303
+
+    mask = np.ones(end - start, dtype=bool)
+
+    for idx in excluded_indices:
+        mask[idx] = False
+
+    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
     new_y = []
     for i in range(len(x)):
         if y[i] == 1:
-            new_y.append(np.sum(x[i, 60:303]))
+            new_y.append(np.sum(x[i, start:end][mask]))
         else:
             new_y.append(0)
 
