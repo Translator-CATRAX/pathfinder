@@ -416,6 +416,8 @@ if __name__ == "__main__":
 
     with open("src/pathfinder/resources/edge_category_to_idx.pkl", "rb") as f:
         edge_category_to_idx = pickle.load(f)
+    with open("src/pathfinder/resources/ancestors_by_indices.pkl", "rb") as f:
+        ancestors_by_indices = pickle.load(f)
 
     logging.info(edge_category_to_idx)
 
@@ -424,6 +426,12 @@ if __name__ == "__main__":
         for p in excluded_predicates
         if p in edge_category_to_idx
     }
+
+
+    for predicate_idx in list(excluded_indices):
+        ancestors_indices = ancestors_by_indices[predicate_idx]
+        excluded_indices.update(ancestors_indices)
+
 
     start, end = 60, 303
 
