@@ -419,8 +419,6 @@ if __name__ == "__main__":
     with open("src/pathfinder/resources/ancestors_by_indices.pkl", "rb") as f:
         ancestors_by_indices = pickle.load(f)
 
-    logging.info(edge_category_to_idx)
-
     excluded_indices = {
         edge_category_to_idx[p]
         for p in excluded_predicates
