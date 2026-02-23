@@ -91,7 +91,7 @@ def drugbank_data(data_source):
                 else:
                     training[indication] = disease_neighbors
 
-        all_nodes = set(indication_NER_aligned + mechanistic_intermediate_nodes + [drug])
+        all_nodes = set(mechanistic_intermediate_nodes + [drug])
         for mechanism in m:
             if mechanism != drug and mechanism not in d:
                 batch = all_nodes.copy()
