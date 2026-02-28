@@ -8,6 +8,8 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+*.sqlite
+build_model/data/*.json
 
 # PyCharm / IntelliJ
 .idea/

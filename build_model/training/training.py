@@ -68,34 +68,32 @@ def drugbank_data(data_source):
             data = json.load(file)
     else:
         raise ValueError(f"Data source does not exist: {data_source}")
+
+    diseases = set()
+    for key, value in data.items():
+        diseases.update([k for k in value["indication_NER_aligned"].keys()])
+        for mech, values in value["mechanistic_intermediate_nodes"].items():
+            if values["category"] == "biolink:Disease":
+                diseases.update(mech)
+
     training = {}
     for key, value in data.items():
 
-        indication_NER_aligned = [k for k in value["indication_NER_aligned"].keys()]
         mechanistic_intermediate_nodes = [k for k in value["mechanistic_intermediate_nodes"].keys()]
         drug = key
 
-        drug_nodes = set(indication_NER_aligned + mechanistic_intermediate_nodes)
+        drug_nodes = set(mechanistic_intermediate_nodes) - diseases
         if drug in training:
             training[drug].update(drug_nodes)
         else:
             training[drug] = drug_nodes
 
-        m = set(mechanistic_intermediate_nodes)
-        d = set(indication_NER_aligned)
-        disease_neighbors = set(mechanistic_intermediate_nodes + [drug])
-        for indication in d:
-            if indication not in disease_neighbors:
-                if indication in training:
-                    training[indication].update(disease_neighbors)
-                else:
-                    training[indication] = disease_neighbors
-
-        all_nodes = set(mechanistic_intermediate_nodes + [drug])
-        for mechanism in m:
-            if mechanism != drug and mechanism not in d:
+        all_nodes = set(mechanistic_intermediate_nodes + [drug]) - diseases
+        for mechanism in mechanistic_intermediate_nodes:
+            if mechanism != drug:
                 batch = all_nodes.copy()
-                batch.remove(mechanism)
+                if mechanism in batch:
+                    batch.remove(mechanism)
                 if mechanism in training:
                     training[mechanism].update(batch)
                 else:
@@ -148,17 +146,17 @@ def train(x, y, group, kg_version):
     logging.info("Training started")
     dtrain = xgb.DMatrix(x, label=y)
     dtrain.set_group(group)
-    params = {  # hyperparameters extracted from the last hyperparameter-tuning.log
+    params = {
         'objective': 'rank:pairwise',
         'eval_metric': 'ndcg',
-        'eta': 0.24,
-        'max_depth': 10,
+        'eta': 0.1,
+        'max_depth': 15,
         'subsample': 0.91,
         'colsample_bytree': 0.84,
-        'min_child_weight': 8,
-        'gamma': 3.87
+        'min_child_weight': 1,
+        'gamma': 0.1
     }
-    bst = xgb.train(params, dtrain, num_boost_round=200)
+    bst = xgb.train(params, dtrain, num_boost_round=500)
     bst.save_model(f"src/pathfinder/resources/pathfinder_xgboost_model_kg_{kg_version}")
     logging.info("Training finished")
 
@@ -363,11 +361,54 @@ def get_biolink_helper():
     return BiolinkHelper(BIOLINK_VERSION, biolink_cache_dir)
 
 
+def exp_func(x, k=5.0):
+    return (np.exp(k * x) - 1) / (np.exp(k) - 1)
+
+
+def binary_labels_to_importance_labels_converter():
+    start, end = 60, 303
+
+    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
+    x_chunk = []
+    counter = 0
+    for i in range(len(x)):
+        if y[i] == 1:
+            x_chunk.append(x[i, start:end])
+            counter += 1
+
+    x_chunk = np.array(x_chunk)
+
+    column_sums = np.sum(x_chunk == 1, axis=0)
+    percents = (counter - column_sums)/counter
+    expo = exp_func(percents, 3)
+
+    new_y = []
+    counter_removed = 0
+    counter = 0
+    for i in range(len(x)):
+        if y[i] == 1:
+            label = np.dot(x[i, start:end], expo)
+            if label > 0.9:
+                new_y.append(label)
+                counter += 1
+            else:
+                new_y.append(0)
+                counter_removed += 1
+        else:
+            new_y.append(0)
+
+    logging.info(f"counter: {counter}")
+    logging.info(f"counter_removed: {counter_removed}")
+
+    return x, np.array(new_y), group
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(f"Start time: {datetime.now()}")
     args = parse_args()
     kg_version = args.kg_version
+    data_source = DRUGBANK_DATA_SOURCE
     download_databases(
         kg_version=kg_version,
         host=args.db_host,
@@ -377,73 +418,14 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
-    data_source = DRUGBANK_DATA_SOURCE
-    #
-    # input_data = create_training_data(data_source)
-    # logging.info(f"Training on {len(input_data)}")
-    #
-    # feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
-    #
-    #
-    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-    #     input_data, feature_structure)
+    input_data = create_training_data(data_source)
+    logging.info(f"Training on {len(input_data)}")
 
+    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
 
+    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+        input_data, feature_structure)
 
-    excluded_predicates = {
-        "biolink:related_to",
-        "biolink:related_to_at_concept_level",
-        "biolink:subclass_of",
-        "biolink:close_match",
-        "biolink:broad_match",
-        "biolink:has_member",
-        "biolink:associated_with",
-        "biolink:mentions",
-        "biolink:coexists_with",
-        "biolink:located_in",
-        "biolink:similar_to",
-        "biolink:overlaps",
-        "biolink:has_part",
-        "biolink:related_condition",
-        "biolink:derives_from",
-        "biolink:has_not_completed",
-        "biolink:has_completed",
-        "biolink:lacks_part",
-        "biolink:develops_from",
-        "biolink:in_taxon",
-        "biolink:same_as",
-    }
+    x, y, group = binary_labels_to_importance_labels_converter()
 
-    with open("src/pathfinder/resources/edge_category_to_idx.pkl", "rb") as f:
-        edge_category_to_idx = pickle.load(f)
-    with open("src/pathfinder/resources/ancestors_by_indices.pkl", "rb") as f:
-        ancestors_by_indices = pickle.load(f)
-
-    excluded_indices = {
-        edge_category_to_idx[p]
-        for p in excluded_predicates
-        if p in edge_category_to_idx
-    }
-
-
-    for predicate_idx in list(excluded_indices):
-        ancestors_indices = ancestors_by_indices[predicate_idx]
-        excluded_indices.update(ancestors_indices)
-
-
-    start, end = 60, 303
-
-    mask = np.ones(end - start, dtype=bool)
-
-    for idx in excluded_indices:
-        mask[idx] = False
-
-    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
-    new_y = []
-    for i in range(len(x)):
-        if y[i] == 1:
-            new_y.append(np.sum(x[i, start:end][mask]))
-        else:
-            new_y.append(0)
-
-    train(x, np.array(new_y), group, kg_version)
+    train(x, y, group, kg_version)
