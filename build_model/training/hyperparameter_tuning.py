@@ -1,15 +1,12 @@
 import logging
 
+import numpy as np
 import optuna
 import xgboost as xgb
 from sklearn.metrics import ndcg_score
 
 from data_loader import load_data
-
-
-def custom_ndcg_scorer(estimator, X, y):
-    preds = estimator.predict(X)
-    return ndcg_score([y], [preds])
+from label_generator import binary_labels_to_importance_labels_converter
 
 
 def split_with_group(group, x, y):
@@ -25,9 +22,12 @@ def split_with_group(group, x, y):
             group[:training_size],
             group[training_size:])
 
+def exp01(x, k=5.0):
+    return (np.exp(k * x) - 1) / (np.exp(k) - 1)
 
 def tune_hyperparameters(output_dir, data_source):
     x, y, group = load_data(output_dir, data_source, True)
+    y = binary_labels_to_importance_labels_converter(x, y)
 
     X_train, X_valid, y_train, y_valid, group_train, group_valid = split_with_group(group, x, y)
 
@@ -50,7 +50,7 @@ def tune_hyperparameters(output_dir, data_source):
         dtrain.set_group(group_train)
         dvalid.set_group(group_valid)
 
-        bst = xgb.train(params, dtrain, num_boost_round=200,
+        bst = xgb.train(params, dtrain, num_boost_round=400,
                         evals=[(dvalid, 'validation')],
                         early_stopping_rounds=20, verbose_eval=False)
 

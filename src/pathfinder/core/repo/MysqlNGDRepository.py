@@ -84,30 +84,30 @@ class MysqlNGDRepository:
         if not curies:
             return []
 
-        placeholders = ",".join(["%s"] * len(curies))
-
-        if limit != -1:
-            query = f"""
-                SELECT curie, pmid_length
-                FROM curie_ngd
-                WHERE curie IN ({placeholders})
-                ORDER BY pmid_length DESC
-                LIMIT %s
-            """
-            params = tuple(curies) + (limit,)
-        else:
-            query = f"""
-                SELECT curie, pmid_length
-                FROM curie_ngd
-                WHERE curie IN ({placeholders})
-                ORDER BY pmid_length DESC
-            """
-            params = tuple(curies)
+        all_rows = []
+        chunk_size = 1000
 
         try:
             with self._conn.cursor() as cursor:
-                cursor.execute(query, params)
-                rows = cursor.fetchall()
-                return rows
+                for i in range(0, len(curies), chunk_size):
+                    chunk = curies[i:i + chunk_size]
+                    placeholders = ",".join(["%s"] * len(chunk))
+
+                    query = f"""
+                        SELECT curie, pmid_length
+                        FROM curie_ngd
+                        WHERE curie IN ({placeholders})
+                    """
+
+                    cursor.execute(query, tuple(chunk))
+                    all_rows.extend(cursor.fetchall())
+
         except Exception as e:
             raise Exception(f"{e}, mysql query failed")
+
+        all_rows.sort(key=lambda x: x[1], reverse=True)
+
+        if limit != -1:
+            all_rows = all_rows[:limit]
+
+        return all_rows

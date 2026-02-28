@@ -110,7 +110,7 @@ class MLRepo(Repository):
             degree=item[2],
             category=item[3],
             name=item[4]
-        ) for item in ranked_items[0:limit]]
+        ) for item in ranked_items]
 
     def get_node_degree(self, node_id):
         return self.degree_repo.get_node_degree(node_id)

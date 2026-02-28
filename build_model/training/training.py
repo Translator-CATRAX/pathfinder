@@ -6,7 +6,6 @@ import pathlib
 import pickle
 import random
 import re
-import sys
 from datetime import datetime
 
 import numpy as np
@@ -14,7 +13,9 @@ import xgboost as xgb
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+from label_generator import binary_labels_to_importance_labels_converter
 from data_loader import load_data
+from biolink_helper_pkg import BiolinkHelper
 
 from constants import (node_degree_sqlite_prefix_name,
                        curie_ngd_sqlite_prefix_name,
@@ -22,8 +23,10 @@ from constants import (node_degree_sqlite_prefix_name,
                        KEGG_DATA_SOURCE,
                        DRUGBANK_DATA_SOURCE,
                        DRUGBANK_TRAIN_DATA_SOURCE,
-                       DRUGBANK_TEST_DATA_SOURCE)
+                       DRUGBANK_TEST_DATA_SOURCE,
+                       BIOLINK_VERSION)
 from data_collector import DataCollector
+from feature_structure import FeatureStructure
 from constants import SHUFFLED_DIR
 from db_build.download_script import ensure_downloaded_and_verified
 
@@ -57,23 +60,51 @@ def drugbank_data(data_source):
     if data_source == DRUGBANK_TRAIN_DATA_SOURCE:
         with open('./build_model/data/training.json', 'r') as file:
             data = json.load(file)
-    else:
+    elif data_source == DRUGBANK_TEST_DATA_SOURCE:
         with open('./build_model/data/testing.json', 'r') as file:
             data = json.load(file)
-    training = []
+    elif data_source == DRUGBANK_DATA_SOURCE:
+        with open('./build_model/data/DrugBank_aligned_with_KG2.json', 'r') as file:
+            data = json.load(file)
+    else:
+        raise ValueError(f"Data source does not exist: {data_source}")
+
+    diseases = set()
     for key, value in data.items():
-        related_CURIE = set()
+        diseases.update([k for k in value["indication_NER_aligned"].keys()])
+        for mech, values in value["mechanistic_intermediate_nodes"].items():
+            if values["category"] == "biolink:Disease":
+                diseases.update(mech)
 
-        batch_of_nodes = [k for k in value["indication_NER_aligned"].keys()]
-        batch_of_nodes.extend([k for k in value["mechanistic_intermediate_nodes"].keys()])
+    training = {}
+    for key, value in data.items():
 
-        related_CURIE.add(key)
-        related_CURIE.update(batch_of_nodes)
+        mechanistic_intermediate_nodes = [k for k in value["mechanistic_intermediate_nodes"].keys()]
+        drug = key
 
-        for rel in related_CURIE:
-            training.append((rel, related_CURIE))
+        drug_nodes = set(mechanistic_intermediate_nodes) - diseases
+        if drug in training:
+            training[drug].update(drug_nodes)
+        else:
+            training[drug] = drug_nodes
 
-    return training
+        all_nodes = set(mechanistic_intermediate_nodes + [drug]) - diseases
+        for mechanism in mechanistic_intermediate_nodes:
+            if mechanism != drug:
+                batch = all_nodes.copy()
+                if mechanism in batch:
+                    batch.remove(mechanism)
+                if mechanism in training:
+                    training[mechanism].update(batch)
+                else:
+                    training[mechanism] = batch
+
+    result = []
+
+    for key, value in training.items():
+        result.append((key, value))
+
+    return result
 
 
 def kegg_training_data():
@@ -105,6 +136,8 @@ def create_training_data(data_source):
         return drugbank_data(DRUGBANK_TRAIN_DATA_SOURCE)
     elif data_source == DRUGBANK_TEST_DATA_SOURCE:
         return drugbank_data(DRUGBANK_TEST_DATA_SOURCE)
+    elif data_source == DRUGBANK_DATA_SOURCE:
+        return drugbank_data(DRUGBANK_DATA_SOURCE)
     else:
         raise ValueError(f"Data source does not exist: {data_source}")
 
@@ -113,17 +146,17 @@ def train(x, y, group, kg_version):
     logging.info("Training started")
     dtrain = xgb.DMatrix(x, label=y)
     dtrain.set_group(group)
-    params = {  # hyperparameters extracted from the last hyperparameter-tuning.log
+    params = {
         'objective': 'rank:pairwise',
         'eval_metric': 'ndcg',
-        'eta': 0.24,
-        'max_depth': 10,
+        'eta': 0.1,
+        'max_depth': 15,
         'subsample': 0.91,
         'colsample_bytree': 0.84,
-        'min_child_weight': 8,
-        'gamma': 3.87
+        'min_child_weight': 1,
+        'gamma': 0.1
     }
-    bst = xgb.train(params, dtrain, num_boost_round=200)
+    bst = xgb.train(params, dtrain, num_boost_round=500)
     bst.save_model(f"src/pathfinder/resources/pathfinder_xgboost_model_kg_{kg_version}")
     logging.info("Training finished")
 
@@ -322,11 +355,18 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_biolink_helper():
+    biolink_cache_dir = "./biolink"
+    pathlib.Path(biolink_cache_dir).mkdir(parents=True, exist_ok=True)
+    return BiolinkHelper(BIOLINK_VERSION, biolink_cache_dir)
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(f"Start time: {datetime.now()}")
     args = parse_args()
     kg_version = args.kg_version
+    data_source = DRUGBANK_DATA_SOURCE
     download_databases(
         kg_version=kg_version,
         host=args.db_host,
@@ -336,16 +376,16 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
-    # split_data()
-    #
-    # data_source = DRUGBANK_TEST_DATA_SOURCE
-    # input_data = create_training_data(data_source)
-    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-    #     input_data)
-    #
-    # data_source = DRUGBANK_TRAIN_DATA_SOURCE
-    # input_data = create_training_data(data_source)
-    # DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-    #     input_data)
+    input_data = create_training_data(data_source)
+    logging.info(f"Training on {len(input_data)}")
 
-    train_all_drugbank(args.out_dir, kg_version)
+    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+
+    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+        input_data, feature_structure)
+
+    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
+
+    updated_y = binary_labels_to_importance_labels_converter(x, y)
+
+    train(x, updated_y, group, kg_version)
