@@ -6,7 +6,6 @@ import pathlib
 import pickle
 import random
 import re
-import sys
 from datetime import datetime
 
 import numpy as np
@@ -14,6 +13,7 @@ import xgboost as xgb
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+from label_generator import binary_labels_to_importance_labels_converter
 from data_loader import load_data
 from biolink_helper_pkg import BiolinkHelper
 
@@ -361,48 +361,6 @@ def get_biolink_helper():
     return BiolinkHelper(BIOLINK_VERSION, biolink_cache_dir)
 
 
-def exp_func(x, k=5.0):
-    return (np.exp(k * x) - 1) / (np.exp(k) - 1)
-
-
-def binary_labels_to_importance_labels_converter():
-    start, end = 60, 303
-
-    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
-    x_chunk = []
-    counter = 0
-    for i in range(len(x)):
-        if y[i] == 1:
-            x_chunk.append(x[i, start:end])
-            counter += 1
-
-    x_chunk = np.array(x_chunk)
-
-    column_sums = np.sum(x_chunk == 1, axis=0)
-    percents = (counter - column_sums)/counter
-    expo = exp_func(percents, 3)
-
-    new_y = []
-    counter_removed = 0
-    counter = 0
-    for i in range(len(x)):
-        if y[i] == 1:
-            label = np.dot(x[i, start:end], expo)
-            if label > 0.9:
-                new_y.append(label)
-                counter += 1
-            else:
-                new_y.append(0)
-                counter_removed += 1
-        else:
-            new_y.append(0)
-
-    logging.info(f"counter: {counter}")
-    logging.info(f"counter_removed: {counter_removed}")
-
-    return x, np.array(new_y), group
-
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(f"Start time: {datetime.now()}")
@@ -426,6 +384,8 @@ if __name__ == "__main__":
     DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
         input_data, feature_structure)
 
-    x, y, group = binary_labels_to_importance_labels_converter()
+    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
 
-    train(x, y, group, kg_version)
+    updated_y = binary_labels_to_importance_labels_converter(x, y)
+
+    train(x, updated_y, group, kg_version)
