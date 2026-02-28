@@ -40,10 +40,14 @@ class Path:
 
         return weight / len(self.links)
 
-    def make_new_path(self, last_link):
+    def make_new_path(self, last_link, path_limit=None):
         new_links = [Node(link.id, link.weight, link.name, link.degree, link.category) for link in self.links]
         new_links.append(last_link)
-        return Path(self.path_limit - 1, new_links)
+        if path_limit is not None:
+            limit = path_limit
+        else:
+            limit = self.path_limit - 1
+        return Path(limit, new_links)
 
     def last(self):
         if len(self.links) == 0:

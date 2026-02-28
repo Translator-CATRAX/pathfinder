@@ -20,9 +20,12 @@ def process_path(path_string):
             if node_degree > path_finder_model.degree_threshold:
                 return path_string, result, None
             neighbors = repo.get_neighbors(last_link, path_finder_model.prune_top_k)
-            for neighbor in neighbors:
+            for idx, neighbor in enumerate(neighbors):
                 if neighbor not in path_finder_model.path.links:
-                    new_path = path_finder_model.path.make_new_path(neighbor)
+                    if idx < path_finder_model.prune_top_k:
+                        new_path = path_finder_model.path.make_new_path(neighbor)
+                    else:
+                        new_path = path_finder_model.path.make_new_path(neighbor, 0)
                     result.append(new_path.serialize())
 
         return path_string, result, None

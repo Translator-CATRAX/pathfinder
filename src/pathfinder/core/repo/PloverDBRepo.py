@@ -86,6 +86,13 @@ class PloverDBRepo(Repository):
             if node_id_input in json['nodes']['n1']:
                 return json['nodes']['n1'][node_id_input][1], nodes, edges
             return None, None, None
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 403: #TODO loop over all different node categories to get all neighbors
+                if "forbidden" in str(e).lower():
+                    logging.error("A requests error occurred: %s", e, exc_info=True)
+                    logging.error(f"CURIE: {node_id_input}")
+                    return None, None, None
+                raise e
         except requests.exceptions.RequestException as e:
             logging.error("A requests error occurred: %s", e, exc_info=True)
             raise e
