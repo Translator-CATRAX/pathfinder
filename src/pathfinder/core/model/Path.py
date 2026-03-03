@@ -1,5 +1,6 @@
 import math
 import pickle
+import statistics
 
 from pathfinder.core.model.Node import Node
 
@@ -26,19 +27,39 @@ class Path:
             result += str(link)
         return result
 
+    def calculate_degree_penalty(self, degrees, p):
+        if not degrees:
+            return 0
+        sum_of_powers = sum(d ** p for d in degrees)
+        mean_of_powers = sum_of_powers / len(degrees)
+        penalty = mean_of_powers ** (1 / p)
+
+        return penalty
+
     def compute_weight(self):
-        weight = 0
-        degree_sum = 0
+        weight_over_degree = []
+        weight = []
+        degree = []
         for link in self.links:
-            if link.weight == float('inf') or link.weight is None:
-                return float('inf')
-            degree_sum += link.degree
-            weight += link.weight
+            if link.weight is None:
+                return 0
+            if link.degree > 0:
+                degree.append(link.degree)
+            if link.weight < 1:
+                weight.append(link.weight)
+                if link.degree > 0:
+                    weight_over_degree.append(link.weight / math.log(link.degree))
+                else:
+                    weight_over_degree.append(link.weight)
 
-        if degree_sum > 1:
-            weight /= math.log(degree_sum, 10)
+        w_d_geo_mean = statistics.geometric_mean(weight_over_degree)
+        w_geo_mean = statistics.geometric_mean(weight_over_degree)
 
-        return weight / len(self.links)
+        if len(degree) > 0:
+            degree_penalty = self.calculate_degree_penalty(degree, 4)
+            w_geo_mean /= math.log(degree_penalty)
+
+        return (w_d_geo_mean + w_geo_mean) / 2
 
     def make_new_path(self, last_link, path_limit=None):
         new_links = [Node(link.id, link.weight, link.name, link.degree, link.category) for link in self.links]
