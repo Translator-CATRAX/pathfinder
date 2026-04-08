@@ -1,4 +1,5 @@
 import math
+import queue
 from concurrent.futures import ThreadPoolExecutor
 
 from pathfinder.core.BreadthFirstSearch import BreadthFirstSearch
@@ -18,6 +19,15 @@ class BidirectionalPathFinder:
         self.degree_threshold = degree_threshold
         self.logger = logger
 
+    def get_container_and_queue(self, hops_numbers, node_id):
+        path_container = PathContainer()
+        path_queue = queue.Queue()
+        new_path = Path(hops_numbers, [Node(node_id, weight=1)])
+        if hops_numbers != 0:
+            path_queue.put(new_path)
+        path_container.add_new_path(new_path)
+        return path_container, path_queue
+
     def find_all_paths(self, node_id_1, node_id_2, hops_numbers=1):
         self.logger.info("Finding paths process has started")
         result = set()
@@ -29,19 +39,19 @@ class BidirectionalPathFinder:
         hops_numbers_1 = math.floor((hops_numbers + 1) / 2)
         hops_numbers_2 = math.floor(hops_numbers / 2)
 
-        path_container_1 = PathContainer()
+        path_container_1, path_queue_1 = self.get_container_and_queue(hops_numbers_1, node_id_1)
         bfs_1 = BreadthFirstSearch(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, path_container_1,
-                                   self.prune_top_k, self.degree_threshold,
+                                   path_queue_1, self.prune_top_k, self.degree_threshold,
                                    self.logger)
 
-        path_container_2 = PathContainer()
+        path_container_2, path_queue_2 = self.get_container_and_queue(hops_numbers_2, node_id_2)
         bfs_2 = BreadthFirstSearch(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, path_container_2,
-                                   self.prune_top_k, self.degree_threshold,
+                                   path_queue_2, self.prune_top_k, self.degree_threshold,
                                    self.logger)
 
         with ThreadPoolExecutor(max_workers=2) as ex:
             f1 = ex.submit(bfs_1.traverse, node_id_1, hops_numbers_1)
-            f2 = ex.submit(bfs_2.traverse, node_id_2, hops_numbers_2)
+            f2 = ex.submit(bfs_2.traverse)
 
             f1.result()
             f2.result()

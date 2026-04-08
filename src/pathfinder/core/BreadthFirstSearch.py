@@ -1,7 +1,5 @@
 import multiprocessing
 
-import queue
-
 from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Path import Path
 from pathfinder.core.model.PathFinderModel import PathFinderModel
@@ -35,35 +33,27 @@ def process_path(path_string):
 
 class BreadthFirstSearch:
 
-    def __init__(self, repository_name, plover_url, ngd_url, degree_url, path_container, prune_top_k, degree_threshold,
+    def __init__(self, repository_name, plover_url, ngd_url, degree_url, path_container, path_queue, prune_top_k, degree_threshold,
                  logger):
         self.repo_name = repository_name
         self.plover_url = plover_url
         self.ngd_url = ngd_url
         self.degree_url = degree_url
+        self.path_queue = path_queue
         self.path_container = path_container
         self.prune_top_k = prune_top_k
         self.degree_threshold = degree_threshold
         self.logger = logger
 
-    def traverse(self, source_id, hops_numbers=1):
-        self.logger.info(f"Expanding {source_id}")
-        path_queue = queue.Queue()
-        new_path = Path(hops_numbers, [Node(source_id, weight=1)])
-        path_queue.put(new_path)
-        self.path_container.add_new_path(new_path)
-
-        if hops_numbers == 0:
-            return
-
+    def traverse(self):
         num_cores = min(multiprocessing.cpu_count(), 4)
 
         with multiprocessing.Pool(num_cores) as pool:
-            while not path_queue.empty():
+            while not self.path_queue.empty():
                 paths = []
                 for _ in range(4 * num_cores):
-                    if not path_queue.empty():
-                        paths.append(PathFinderModel(self.repo_name, path_queue.get(), self.plover_url, self.ngd_url,
+                    if not self.path_queue.empty():
+                        paths.append(PathFinderModel(self.repo_name, self.path_queue.get(), self.plover_url, self.ngd_url,
                                                      self.degree_url, self.prune_top_k, self.degree_threshold).serialize())
 
                 new_paths_list = pool.map(process_path, paths)
@@ -76,5 +66,5 @@ class BreadthFirstSearch:
                     else:
                         for new_path in new_paths:
                             p = Path.deserialize(new_path)
-                            path_queue.put(p)
+                            self.path_queue.put(p)
                             self.path_container.add_new_path(p)
