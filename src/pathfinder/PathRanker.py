@@ -1,9 +1,10 @@
 import queue
 
-from pathfinder.core.BreadthFirstSearch import BreadthFirstSearch
+from pathfinder.core.BreadthFirstSearch import traverse
 from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Path import Path
 from pathfinder.core.model.PathContainer import PathContainer
+from pathfinder.core.repo.repo_factory import get_repo
 
 class PathRanker:
     def __init__(self, repo_name, plover_url, ngd_url, degree_url, logger):
@@ -12,7 +13,7 @@ class PathRanker:
         self.ngd_url = ngd_url
         self.degree_url = degree_url
         self.degree_threshold = 10000000
-        self.prune_top_k = 0
+        self.prune_top_k = 10000000
         self.logger = logger
 
     def rank_path(self, trapi_structure):
@@ -35,11 +36,10 @@ class PathRanker:
             new_path = Path(1, [node])
             path_queue.put(new_path)
             path_container.add_new_path(new_path)
-        bfs_1 = BreadthFirstSearch(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, path_container,
-                                   path_queue, 1, self.degree_threshold,
-                                   self.logger)
 
-        bfs_1.traverse()
+        repo = get_repo(self.repo_name, self.plover_url, self.ngd_url, self.degree_url)
+
+        traverse(repo, path_queue, path_container, self.prune_top_k, self.degree_threshold, self.logger)
 
         for _, paths in path_container.path_dict.items():
             for path in paths:
@@ -87,8 +87,7 @@ class PathRanker:
                         next_item = neighbor
                         break
                 prev = current
-
-            print("helloworld")
+# TODO: Not completed.
 
 
 

@@ -10,7 +10,7 @@ class Pathfinder:
     def __init__(
             self,
             repository_name: str,
-            plover_url: str,
+            repo_uri: str,
             ngd_url: str,
             degree_url: str,
             blocked_curies: Set[str],
@@ -18,7 +18,7 @@ class Pathfinder:
             logger
     ):
         self.repo_name = repository_name
-        self.plover_url = plover_url
+        self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
         self.blocked_curies = blocked_curies
@@ -42,7 +42,7 @@ class Pathfinder:
             category_constraints = set()
         path_finder = BidirectionalPathFinder(
             "MLRepo",
-            self.plover_url,
+            self.repo_uri,
             self.ngd_url,
             self.degree_url,
             prune_top_k,
@@ -64,7 +64,7 @@ class Pathfinder:
         self.logger.info(f"PathFinder found {len(paths)} paths")
 
         edge_extractor = EdgeExtractorFromPloverDB(
-            self.plover_url
+            self.repo_uri.removeprefix("ploverdb:") #todo: Make EdgeExtractor configurable, it does not support gandalf
         )
         return ResultPerPathConverter(
             paths,

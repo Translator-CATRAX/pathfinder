@@ -27,6 +27,7 @@ class MLRepo(Repository):
         self.edge_category_to_idx = None
         self.sorted_category_list = None
         self.node_degree_category_to_idx = None
+        self.load_data()
 
     def load_data(self):
         pkg_files = resource_files('pathfinder.resources')
@@ -50,17 +51,12 @@ class MLRepo(Repository):
         if limit <= 0:
             raise Exception(f"The limit:{limit} could not be negative or zero.")
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            future_get_neighbors = executor.submit(
-                get_neighbors_info,
-                node.id,
-                self.ngd_repo,
-                self.repo,
-                self.degree_repo
-            )
-            future_load_data = executor.submit(self.load_data)
-
-            content_by_curie, curie_category = future_get_neighbors.result()
+        content_by_curie, curie_category = get_neighbors_info(
+            node.id,
+            self.ngd_repo,
+            self.repo,
+            self.degree_repo
+        )
 
         if content_by_curie is None:
             return []

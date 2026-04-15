@@ -1,32 +1,44 @@
 import math
 import queue
-from concurrent.futures import ThreadPoolExecutor
+import logging
+from concurrent.futures import ProcessPoolExecutor
 
-from pathfinder.core.BreadthFirstSearch import BreadthFirstSearch
+from pathfinder.core.BreadthFirstSearch import traverse
 from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Path import Path
 from pathfinder.core.model.PathContainer import PathContainer
+from pathfinder.core.repo.repo_factory import get_repo
+
+
+def run_bfs_process(hops_numbers, node_id, repo_args, prune_top_k, degree_threshold):
+    repo = get_repo(*repo_args)
+
+    path_container = PathContainer()
+    path_queue = queue.Queue()
+
+    new_path = Path(hops_numbers, [Node(node_id, weight=1)])
+    if hops_numbers != 0:
+        path_queue.put(new_path)
+    path_container.add_new_path(new_path)
+
+    logger = logging.getLogger(__name__)
+
+    traverse(repo, path_queue, path_container, prune_top_k, degree_threshold, logger)
+
+    return path_container
 
 
 class BidirectionalPathFinder:
 
-    def __init__(self, repository_name, plover_url, ngd_url, degree_url, prune_top_k, degree_threshold, logger):
+    def __init__(self, repository_name, repo_uri, ngd_url, degree_url, prune_top_k, degree_threshold, logger):
         self.repo_name = repository_name
-        self.plover_url = plover_url
+        self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
         self.prune_top_k = prune_top_k
         self.degree_threshold = degree_threshold
         self.logger = logger
 
-    def get_container_and_queue(self, hops_numbers, node_id):
-        path_container = PathContainer()
-        path_queue = queue.Queue()
-        new_path = Path(hops_numbers, [Node(node_id, weight=1)])
-        if hops_numbers != 0:
-            path_queue.put(new_path)
-        path_container.add_new_path(new_path)
-        return path_container, path_queue
 
     def find_all_paths(self, node_id_1, node_id_2, hops_numbers=1):
         self.logger.info("Finding paths process has started")
@@ -39,22 +51,14 @@ class BidirectionalPathFinder:
         hops_numbers_1 = math.floor((hops_numbers + 1) / 2)
         hops_numbers_2 = math.floor(hops_numbers / 2)
 
-        path_container_1, path_queue_1 = self.get_container_and_queue(hops_numbers_1, node_id_1)
-        bfs_1 = BreadthFirstSearch(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, path_container_1,
-                                   path_queue_1, self.prune_top_k, self.degree_threshold,
-                                   self.logger)
+        repo_args = (self.repo_name, self.repo_uri, self.ngd_url, self.degree_url)
 
-        path_container_2, path_queue_2 = self.get_container_and_queue(hops_numbers_2, node_id_2)
-        bfs_2 = BreadthFirstSearch(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, path_container_2,
-                                   path_queue_2, self.prune_top_k, self.degree_threshold,
-                                   self.logger)
+        with ProcessPoolExecutor(max_workers=2) as ex:
+            f1 = ex.submit(run_bfs_process, hops_numbers_1, node_id_1, repo_args, self.prune_top_k, self.degree_threshold)
+            f2 = ex.submit(run_bfs_process, hops_numbers_2, node_id_2, repo_args, self.prune_top_k, self.degree_threshold)
 
-        with ThreadPoolExecutor(max_workers=2) as ex:
-            f1 = ex.submit(bfs_1.traverse, node_id_1, hops_numbers_1)
-            f2 = ex.submit(bfs_2.traverse)
-
-            f1.result()
-            f2.result()
+            path_container_1 = f1.result()
+            path_container_2 = f2.result()
 
         intersection_list = path_container_1.path_dict.keys() & path_container_2.path_dict.keys()
 

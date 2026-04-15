@@ -47,7 +47,7 @@ class Path:
                 degree.append(link.degree)
             if link.weight < 1:
                 weight.append(link.weight)
-                if link.degree > 0:
+                if link.degree > 1:
                     weight_over_degree.append(link.weight / math.log(link.degree))
                 else:
                     weight_over_degree.append(link.weight)
@@ -57,7 +57,8 @@ class Path:
 
         if len(degree) > 0:
             degree_penalty = self.calculate_degree_penalty(degree, 4)
-            w_geo_mean /= math.log(degree_penalty)
+            if degree_penalty > 1:
+                w_geo_mean /= math.log(degree_penalty)
 
         return (w_d_geo_mean + w_geo_mean) / 2
 
