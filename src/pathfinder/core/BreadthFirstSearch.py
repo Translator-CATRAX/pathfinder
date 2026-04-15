@@ -29,7 +29,7 @@ def process_path(path, repo, prune_top_k, degree_threshold):
 
 
 def traverse(repo, path_queue, path_container, prune_top_k, degree_threshold, logger):
-    logger.error("Traversing process has started")
+    logger.info("Traversing process has started")
     num_threads = min(os.cpu_count() or 4, 4)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
