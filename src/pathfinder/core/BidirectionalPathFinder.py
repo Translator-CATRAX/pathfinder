@@ -1,6 +1,5 @@
 import math
 import queue
-import logging
 from concurrent.futures import ProcessPoolExecutor
 
 from pathfinder.core.BreadthFirstSearch import traverse
@@ -21,9 +20,8 @@ def run_bfs_process(hops_numbers, node_id, repo_args, prune_top_k, degree_thresh
         path_queue.put(new_path)
     path_container.add_new_path(new_path)
 
-    logger = logging.getLogger(__name__)
 
-    traverse(repo, path_queue, path_container, prune_top_k, degree_threshold, logger)
+    traverse(repo, path_queue, path_container, prune_top_k, degree_threshold)
 
     return path_container
 
@@ -51,7 +49,7 @@ class BidirectionalPathFinder:
         hops_numbers_1 = math.floor((hops_numbers + 1) / 2)
         hops_numbers_2 = math.floor(hops_numbers / 2)
 
-        repo_args = (self.repo_name, self.repo_uri, self.ngd_url, self.degree_url)
+        repo_args = (self.repo_name, self.repo_uri, self.ngd_url, self.degree_url, self.degree_threshold)
 
         with ProcessPoolExecutor(max_workers=2) as ex:
             f1 = ex.submit(run_bfs_process, hops_numbers_1, node_id_1, repo_args, self.prune_top_k, self.degree_threshold)

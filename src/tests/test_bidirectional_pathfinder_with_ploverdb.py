@@ -14,13 +14,13 @@ def test_bidirectional_pathfinder_with_ploverdb():
     ngd_path = HERE / "../../curie_ngd_v1.0_KG2.10.2.sqlite"
     kg2c_path = HERE / "../../kg2c_v1.0_KG2.10.2.sqlite"
     pathfinder = BidirectionalPathFinder(
-        "MLRepo",
-        "ploverdb:https://kg2cploverdb.ci.transltr.io",
-        f"sqlite:{ngd_path}",
-        f"sqlite:{kg2c_path}",
-        100,
-        100000000,
-        logger
+        repository_name="MLRepo",
+        repo_uri="ploverdb:https://kg2cploverdb.ci.transltr.io",
+        ngd_url=f"sqlite:{ngd_path}",
+        degree_url=f"sqlite:{kg2c_path}",
+        prune_top_k=100,
+        degree_threshold=20000,
+        logger=logger
     )
     start_time = time.perf_counter()
     response = pathfinder.find_all_paths(

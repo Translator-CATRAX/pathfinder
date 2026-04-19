@@ -6,7 +6,8 @@ from bmt import Toolkit
 
 class GandalfRepo:
 
-    def __init__(self, gandalf_path, degree_repo):
+    def __init__(self, node_degree_threshold, gandalf_path, degree_repo):
+        self.node_degree_threshold = node_degree_threshold
         self.graph = CSRGraph.load_mmap(gandalf_path)
         self.bmt = Toolkit()
         # Freeze all objects allocated so far (graph + BMT) into a permanent
@@ -36,7 +37,9 @@ class GandalfRepo:
                 }
             },
             self.bmt,
-            dehydrated=True
+            dehydrated=True,
+            subclass=False,
+            max_node_degree=self.node_degree_threshold
         )
         nodes = {}
         edges = {}

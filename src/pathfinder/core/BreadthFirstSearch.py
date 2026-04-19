@@ -28,8 +28,7 @@ def process_path(path, repo, prune_top_k, degree_threshold):
         return path, None, e
 
 
-def traverse(repo, path_queue, path_container, prune_top_k, degree_threshold, logger):
-    logger.info("Traversing process has started")
+def traverse(repo, path_queue, path_container, prune_top_k, degree_threshold):
     num_threads = min(os.cpu_count() or 4, 4)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
@@ -48,7 +47,7 @@ def traverse(repo, path_queue, path_container, prune_top_k, degree_threshold, lo
                 original_path, new_paths, exception = future.result()
 
                 if exception:
-                    logger.error(f"Path {original_path} raised an exception: {exception}")
+                    # logger.error(f"Path {original_path} raised an exception: {exception}") todo
                     raise exception
                 else:
                     for new_path in new_paths:

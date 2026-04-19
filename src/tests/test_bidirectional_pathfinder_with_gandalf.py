@@ -19,7 +19,7 @@ def test_bidirectional_pathfinder_with_gandalf():
         ngd_url=f"sqlite:{ngd_path}",
         degree_url=f"sqlite:{kg2c_path}",
         prune_top_k=100,
-        degree_threshold=100000000,
+        degree_threshold=20000,
         logger=logger
     )
     start_time = time.perf_counter()
