@@ -2,6 +2,7 @@ from typing import Set
 from pathfinder.core.BidirectionalPathFinder import BidirectionalPathFinder
 
 from pathfinder.converter.EdgeExtractorFromPloverDB import EdgeExtractorFromPloverDB
+from pathfinder.converter.EdgeExtractorFromGandalf import EdgeExtractorFromGandalf
 from pathfinder.converter.ResultPerPathConverter import ResultPerPathConverter
 
 
@@ -63,9 +64,7 @@ class Pathfinder:
         paths = paths[:limit]
         self.logger.info(f"PathFinder found {len(paths)} paths")
 
-        edge_extractor = EdgeExtractorFromPloverDB(
-            self.repo_uri.removeprefix("ploverdb:") #todo: Make EdgeExtractor configurable, it does not support gandalf
-        )
+        edge_extractor = self.get_edge_extractor(self.repo_uri)
         return ResultPerPathConverter(
             paths,
             src_node_id,
@@ -108,3 +107,11 @@ class Pathfinder:
             if append:
                 result.append(path)
         return result
+
+    def get_edge_extractor(self, repo_uri):
+        if repo_uri.startswith("ploverdb:"):
+            return EdgeExtractorFromPloverDB(repo_uri.removeprefix("ploverdb:"))
+        elif repo_uri.startswith("gandalf:"):
+            return EdgeExtractorFromGandalf(repo_uri.removeprefix("gandalf:"))
+        else:
+            raise ValueError(f"Unknown repo uri Starting with: '{repo_uri}'.")

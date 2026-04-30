@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "catrax-pathfinder"
-version = "1.2.2"
+version = "2.0.2"
 dependencies = [
     "numpy==1.26.4",
     "xgboost==2.1.4",
@@ -14,6 +14,9 @@ dependencies = [
     "seaborn",
     "matplotlib",
     "optuna",
+    "gandalf-csr",
+    "pydantic-settings>=2.12.0",
+    "orjson>=3.9.0"
 ]
 
 description = "Pathfinder is designed to identify semantic paths between two biological entities."

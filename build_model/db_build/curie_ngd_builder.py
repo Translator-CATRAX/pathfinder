@@ -5,15 +5,58 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-
+from collections import defaultdict
+from tqdm import tqdm
+import json
 import redis
-
-from check_plover_url_compatibility import get_kg2_version_from_plover
 from download_script import ensure_downloaded_and_verified, remote_file_exist
 from upload_script import upload_file
 from curie_pmids_into_memory import curie_pmids_into_memory
 from ngd_calculation_process import run_ngd_calculation_process
 
+
+def build_in_memory_dict(kgx_dir):
+
+    neighbors_dict = defaultdict(set)
+
+    nodes_file_path = f"{kgx_dir}/nodes.jsonl"
+    total_bytes = os.path.getsize(nodes_file_path)
+    print(f"File size: {total_bytes / (1024 ** 3):.2f} GB. Starting process of getting neighbors by curie")
+
+    with open(nodes_file_path, 'r', encoding='utf-8') as file, tqdm(
+            total=total_bytes,
+            unit='B',
+            unit_scale=True,
+            desc="Reading Graph"
+    ) as pbar:
+        for line in file:
+            pbar.update(len(line.encode('utf-8')))
+            data = json.loads(line)
+            neighbors_dict[data.get('id')] = set()
+
+
+    edges_file_path = f"{kgx_dir}/edges.jsonl"
+    total_bytes = os.path.getsize(edges_file_path)
+    print(f"File size: {total_bytes / (1024 ** 3):.2f} GB. Starting process of getting neighbors by curie")
+
+    with open(edges_file_path, 'r', encoding='utf-8') as file, tqdm(
+            total=total_bytes,
+            unit='B',
+            unit_scale=True,
+            desc="Reading Graph"
+    ) as pbar:
+        for line in file:
+            pbar.update(len(line.encode('utf-8')))
+            data = json.loads(line)
+            subj = data.get('subject')
+            obj = data.get('object')
+
+            if subj and obj:
+                neighbors_dict[subj].add(obj)
+                neighbors_dict[obj].add(subj)
+
+    print("Neighbors dictionary built successfully!")
+    return dict(neighbors_dict)
 
 # -----------------------------
 # CLI
@@ -31,18 +74,11 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--kg-version",
-        type=kg_version_validator,
-        required=True,
-        metavar="VERSION",
-        help="Knowledge graph version (e.g. 2.10.2)",
-    )
-
-    parser.add_argument(
-        "--plover-url",
+        "--kgx-path",
         type=str,
+        default="",
         required=True,
-        help="PloverDB URL",
+        help="KGX Path",
     )
 
     parser.add_argument(
@@ -128,6 +164,13 @@ def parse_args():
 # Main
 # -----------------------------
 
+def get_kgx_version(kgx_path):
+    kgx_metadata_file = Path(kgx_path) / "graph-metadata.json"
+    with open(kgx_metadata_file, "r") as f:
+        kgx_version = json.load(f)["version"]
+    return kgx_version.replace("_", "")
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     logging.info(f"Start time: {datetime.now()}")
@@ -135,11 +178,14 @@ if __name__ == "__main__":
 
     args = parse_args()
 
-    version = args.kg_version
-    curie_ngd_db_name = f"curie_ngd_v1.0_KG{version}.sqlite"
-    logging.info(f"This script will try to build curie_ngd database: {curie_ngd_db_name}")
+    kgx_path = args.kgx_path
+    version = get_kgx_version(kgx_path)
+    curie_ngd_db_name = f"curie_ngd_v1.0_tier0-{version}.sqlite"
+    remote_path_curie_ngd = f"~/tier0-{version}/{curie_ngd_db_name}"
+    curie_to_pmids_path = f"curie_to_pmids_v1.0_tier0-{version}.sqlite"
+    remote_path_curie_pmids = f"~/tier0-{version}/{curie_to_pmids_path}"
 
-    plover_url = args.plover_url
+    logging.info(f"This script will try to build curie_ngd database: {curie_ngd_db_name}")
 
     redis_host = args.redis_host
     redis_port = args.redis_port
@@ -156,8 +202,6 @@ if __name__ == "__main__":
     ssh_key = args.ssh_key
     ssh_password = args.ssh_password or os.getenv("SSH_PASSWORD")
 
-
-    remote_path_curie_ngd = f"~/KG{version}/{curie_ngd_db_name}"
     out_dir = Path(args.out_dir)
 
     version_already_exist = remote_file_exist(
@@ -168,13 +212,11 @@ if __name__ == "__main__":
         key_path=ssh_key,
         password=ssh_password,
     )
-    if not version_already_exist:
+    if version_already_exist:
         logging.error(f"{curie_ngd_db_name} already exist at: {db_username}@{db_host}:{remote_path_curie_ngd}")
         exit(0)
 
-    curie_to_pmids_path = f"curie_to_pmids_v1.0_KG{version}.sqlite"
     local_path_curie_pmids = out_dir / curie_to_pmids_path
-    remote_path_curie_pmids = f"~/KG{version}/{curie_to_pmids_path}"
 
     ensure_downloaded_and_verified(
         host=db_host,
@@ -186,18 +228,11 @@ if __name__ == "__main__":
         password=ssh_password,
     )
 
-    plover_version = get_kg2_version_from_plover(plover_url)
 
-    if plover_version is None:
-        logging.error(f"Could not get KG2 version from PloverDB URL: {plover_url}")
-        exit(0)
-    if plover_version != version:
-        logging.error(f"KG2 version mismatch: Plover version is {plover_version}, but expected {version}")
-        exit(0)
-
+    neighbors_curie_by_curie_dict = build_in_memory_dict(kgx_path)
     redis_client = redis.Redis(host=redis_host, port=redis_port, db=redis_db)
     curie_pmids_into_memory(curie_to_pmids_path, version, redis_client)
-    run_ngd_calculation_process(plover_url, curie_to_pmids_path, curie_ngd_db_name, log_NGD_normalizer, redis_host, redis_port, redis_db)
+    run_ngd_calculation_process(neighbors_curie_by_curie_dict, curie_to_pmids_path, curie_ngd_db_name, log_NGD_normalizer, redis_host, redis_port, redis_db)
 
     local_path_curie_ngd = out_dir / curie_ngd_db_name
 

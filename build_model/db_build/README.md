@@ -1,6 +1,6 @@
 # curie_ngd_builder
 
-Builds a `curie_ngd` SQLite database for a specified KG2 version, using a PloverDB instance for KG lookups and Redis as a working cache.
+Builds a `curie_ngd` SQLite database for a specified KGX version, using PloverDB or Gandalf instance for KG lookups and Redis as a working cache.
 
 ---
 
@@ -38,21 +38,12 @@ Authentication options:
 ### Minimal example (mandatory arguments)
 
 ```bash
-python curie_ngd_builder.py \
-  --kg-version 2.10.2 \
-  --plover-url https://kg2cploverdb.test.transltr.io
+python curie_ngd_builder.py --kgx-path <PATH>
 ```
 
 ---
 
 ## Command-line arguments
-
-### Required
-- `--kg-version VERSION`  
-  Knowledge graph version in `X.Y.Z` format (e.g. `2.10.2`).
-
-- `--plover-url URL`  
-  Base URL of the PloverDB instance.
 
 ### Redis options
 - `--redis-host HOST` (default: `localhost`)
@@ -78,25 +69,7 @@ python curie_ngd_builder.py \
 
 ---
 
-## Outputs
-
-### Local files
-Stored in `--out-dir`:
-- `curie_to_pmids_v1.0_KG<kg-version>.sqlite`
-- `curie_ngd_v1.0_KG<kg-version>.sqlite`
-
-### Remote upload
-Uploaded to the remote host at:
-```
-~/KG<kg-version>/curie_ngd_v1.0_KG<kg-version>.sqlite
-```
-
----
-
 ## Notes and troubleshooting
-
-- **KG version mismatch**  
-  The script queries PloverDB for its KG2 version and exits if it does not match `--kg-version`.
 
 - **Redis reuse**  
   Redis stores a `version` key; if it matches the requested KG version, reloading may be skipped.

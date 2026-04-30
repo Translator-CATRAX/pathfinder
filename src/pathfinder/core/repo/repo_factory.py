@@ -6,7 +6,7 @@ from pathfinder.core.repo.PloverDBRepo import PloverDBRepo
 from pathfinder.core.repo.MysqlNGDRepository import MysqlNGDRepository
 from pathfinder.core.repo.MysqlNodeDegreeRepo import MysqlNodeDegreeRepo
 
-from src.pathfinder.core.repo.GandalfRepo import GandalfRepo
+from pathfinder.core.repo.GandalfRepo import GandalfRepo
 
 
 def get_ngd_repo(ngd_url):

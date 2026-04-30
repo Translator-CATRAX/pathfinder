@@ -6,7 +6,6 @@ import time
 from tqdm import tqdm
 
 from NGDSortedNeighborsRepo import NGDSortedNeighborsRepo
-from PloverDBRepo import PloverDBRepo
 from RedisConnector import RedisConnector
 
 
@@ -19,9 +18,9 @@ def calculate_neighbor_NGD_list(data):
         return data[0], None, e
 
 
-def run_ngd_calculation_process(plover_url, curie_to_pmids_path, ngd_db_name, log_of_NGD_normalizer, redis_host, redis_port, redis_db):
+def run_ngd_calculation_process(neighbors_curie_by_curie_dict, curie_to_pmids_path, ngd_db_name, log_of_NGD_normalizer, redis_host, redis_port, redis_db):
+    counter = 0
     redis_connector = RedisConnector(redis_host, redis_port, redis_db)
-    repo = PloverDBRepo(plover_url=plover_url)
     sqlite_connection_write = sqlite3.connect(ngd_db_name)
     cursor_write = sqlite_connection_write.cursor()
     cursor_write.execute('''
@@ -55,17 +54,17 @@ def run_ngd_calculation_process(plover_url, curie_to_pmids_path, ngd_db_name, lo
         rows = cursor_read.fetchall()
         if not rows:
             break
-        CURIEs = [row[0] for row in rows]
-        try:
-            neighbors_by_curie = repo.get_neighbors(CURIEs)
-        except Exception as e:
-            logging.info(f"get neighbors exception, Error:{e}")
-            time.sleep(5)
-            continue
+        CURIEs = []
+        for row in rows:
+            if row[0] in neighbors_curie_by_curie_dict:
+                CURIEs.append(row[0])
+            else:
+                counter += 1
+
         offset += batch_size
         pbar.update(len(CURIEs))
 
-        CURIEs_and_neighbors = [(curie, neighbors_by_curie[curie], log_of_NGD_normalizer, redis_host, redis_port, redis_db) for curie in CURIEs]
+        CURIEs_and_neighbors = [(curie, neighbors_curie_by_curie_dict[curie], log_of_NGD_normalizer, redis_host, redis_port, redis_db) for curie in CURIEs]
 
         with multiprocessing.Pool(num_cores) as pool:
             results = pool.map(calculate_neighbor_NGD_list, CURIEs_and_neighbors)
@@ -97,3 +96,5 @@ def run_ngd_calculation_process(plover_url, curie_to_pmids_path, ngd_db_name, lo
 
     cursor_read.close()
     sqlite_connection_read.close()
+
+    logging.info(f"Total number of CURIEs skipped: {counter}")
