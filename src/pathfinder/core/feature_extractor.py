@@ -1,9 +1,9 @@
 import numpy as np
 
 
-def get_neighbors_info(curie, ngd_repo, plover_repo, degree_repo):
+def get_neighbors_info(curie, ngd_repo, repo, degree_repo):
     curie_ngd_list = ngd_repo.get_curie_ngd(curie)
-    curie_category, neighbors, edges = plover_repo.get_neighbors_with_edges(curie)
+    curie_category, neighbors, edges = repo.get_neighbors_with_edges(curie)
     if neighbors:
         neighbors_id = [curie for curie, _ in neighbors.items()]
         degrees_by_node = degree_repo.get_degrees_by_node(neighbors_id)
@@ -21,7 +21,7 @@ def get_neighbors_info(curie, ngd_repo, plover_repo, degree_repo):
             content_by_curie[node_id]['category'] = value['category']
         if edges:
             for node, categories in edges.items():
-                for category, _ in categories:
+                for category in categories:
                     if category not in content_by_curie[node]['edges']:
                         content_by_curie[node]['edges'][category] = 1
                     else:

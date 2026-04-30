@@ -1,0 +1,683 @@
+
+{
+  "biolink_version": "4.2.5",
+  "context": "https://raw.githubusercontent.com/biolink/biolink-model/master/context.jsonld",
+  "datetime": "2026-03-25 16:30:09",
+  "description": "Normal completion",
+  "id": "https://arax.ncats.io/api/arax/v1.4/response/443773",
+  "info": null,
+  "job_id": null,
+  "logs": [
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "in asynchronous_query",
+      "timestamp": "2026-03-25T16:30:09.457571"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "In query_return_stream",
+      "timestamp": "2026-03-25T16:30:09.457767"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "ARAX Query launching on incoming Query",
+      "timestamp": "2026-03-25T16:30:09.458048"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "RTXConfiguration says maturity=staging, current_branch=master, is_itrb_instance=True, arax_version=1.6.2, trapi_version=1.6.0",
+      "timestamp": "2026-03-25T16:30:09.458094"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Creating an empty template TRAPI Response",
+      "timestamp": "2026-03-25T16:30:09.458146"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Examine input Query for needed information for dispatch",
+      "timestamp": "2026-03-25T16:30:09.541942"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Deserializing message",
+      "timestamp": "2026-03-25T16:30:09.542034"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Found input processing plan. Sending to the ProcessingPlanExecutor",
+      "timestamp": "2026-03-25T16:30:09.542192"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Entering execute_processing_plan",
+      "timestamp": "2026-03-25T16:30:09.542239"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Connecting to ResponseCache",
+      "timestamp": "2026-03-25T16:30:09.542454"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Creating ARAXMessenger instance",
+      "timestamp": "2026-03-25T16:30:09.572896"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "A single Message is ready and in hand",
+      "timestamp": "2026-03-25T16:30:09.572929"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Found actions",
+      "timestamp": "2026-03-25T16:30:09.572948"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Parsing input actions list",
+      "timestamp": "2026-03-25T16:30:09.572991"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Parsing action: add_qnode(key=n1,ids=CHEBI:31690)",
+      "timestamp": "2026-03-25T16:30:09.573005"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Parsing action: add_qnode(key=n2,ids=MONDO:0004979)",
+      "timestamp": "2026-03-25T16:30:09.573063"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Parsing action: add_qpath(key=p1,subject=n1,object=n2)",
+      "timestamp": "2026-03-25T16:30:09.573084"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Parsing action: connect(action=connect_nodes,max_path_length=1,max_pathfinder_paths=100)",
+      "timestamp": "2026-03-25T16:30:09.573101"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Parsing action: ",
+      "timestamp": "2026-03-25T16:30:09.573118"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Processing action 'add_qnode' with parameters {'key': 'n1', 'ids': 'CHEBI:31690'}",
+      "timestamp": "2026-03-25T16:30:09.576047"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Adding a QueryNode to Message with input parameters {'key': 'n1', 'ids': 'CHEBI:31690', 'name': None, 'categories': None, 'is_set': None, 'option_group_id': None}",
+      "timestamp": "2026-03-25T16:30:09.576113"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Looking up ids ['CHEBI:31690'] in NodeSynonymizer",
+      "timestamp": "2026-03-25T16:30:09.576611"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Processing action 'add_qnode' with parameters {'key': 'n2', 'ids': 'MONDO:0004979'}",
+      "timestamp": "2026-03-25T16:30:09.577010"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Adding a QueryNode to Message with input parameters {'key': 'n2', 'ids': 'MONDO:0004979', 'name': None, 'categories': None, 'is_set': None, 'option_group_id': None}",
+      "timestamp": "2026-03-25T16:30:09.577038"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Looking up ids ['MONDO:0004979'] in NodeSynonymizer",
+      "timestamp": "2026-03-25T16:30:09.577186"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Processing action 'add_qpath' with parameters {'key': 'p1', 'subject': 'n1', 'object': 'n2'}",
+      "timestamp": "2026-03-25T16:30:09.577392"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Adding a QueryPath to Message with parameters {'key': 'p1', 'subject': 'n1', 'object': 'n2'}",
+      "timestamp": "2026-03-25T16:30:09.577431"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Processing action 'connect' with parameters {'action': 'connect_nodes', 'max_path_length': '1', 'max_pathfinder_paths': '100'}",
+      "timestamp": "2026-03-25T16:30:09.577665"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Looking for a previously cached result from PathFinder",
+      "timestamp": "2026-03-25T16:30:09.584753"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Applying Connect to Message with parameters {'action': 'connect_nodes', 'max_path_length': '1', 'max_pathfinder_paths': '100'}",
+      "timestamp": "2026-03-25T16:30:09.596261"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Finding paths process has started",
+      "timestamp": "2026-03-25T16:30:09.597964"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Expanding CHEBI:31690",
+      "timestamp": "2026-03-25T16:30:09.598335"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Expanding MONDO:0004979",
+      "timestamp": "2026-03-25T16:30:09.599016"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "PathFinder found 1 paths",
+      "timestamp": "2026-03-25T16:30:10.614951"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Got result from ARAX PathFinder Connect after 1.0598218441009521. Converting to_dict()",
+      "timestamp": "2026-03-25T16:30:10.637527"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Storing resulting dict in the cache",
+      "timestamp": "2026-03-25T16:30:10.637736"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Stored result in the cache.",
+      "timestamp": "2026-03-25T16:30:10.645377"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Calling ResultTransformer; number of results is: 1",
+      "timestamp": "2026-03-25T16:30:10.645465"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Results have been transformed; number of results is: 1",
+      "timestamp": "2026-03-25T16:30:10.645489"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Storing resulting Message",
+      "timestamp": "2026-03-25T16:30:10.645510"
+    },
+    {
+      "code": "",
+      "level": "DEBUG",
+      "message": "Writing response record to MySQL",
+      "timestamp": "2026-03-25T16:30:10.681105"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Successfully wrote /responses/443773.json to us-east-1 S3 bucket arax-response-storage-2 in 0.2011950369924307 seconds",
+      "timestamp": "2026-03-25T16:30:10.901978"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Result was stored with id 443773. It can be viewed at https://arax.ncats.io/?r=443773",
+      "timestamp": "2026-03-25T16:30:10.902566"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Processing is complete and resulted in 1 results.",
+      "timestamp": "2026-03-25T16:30:10.902591"
+    },
+    {
+      "code": "",
+      "level": "INFO",
+      "message": "Processing is complete. Transmitting resulting Message back to client.",
+      "timestamp": "2026-03-25T16:30:10.902603"
+    }
+  ],
+  "message": {
+    "auxiliary_graphs": {
+      "aux_1": {
+        "attributes": [],
+        "edges": [
+          "46686478",
+          "46587058"
+        ]
+      }
+    },
+    "knowledge_graph": {
+      "edges": {
+        "46587058": {
+          "attributes": [
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:original_predicate",
+              "attributes": null,
+              "description": "The IDs of the original RTX-KG2pre edge(s) corresponding to this edge prior to any synonymization or remapping.",
+              "original_attribute_name": null,
+              "value": [
+                "UNII:8A1O1M485B---biolink:in_clinical_trials_for---None---None---None---MONDO:0004979---ClinicalTrialsKG:"
+              ],
+              "value_type_id": "metatype:String",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:agent_type",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": "manual_agent",
+              "value_type_id": null,
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:knowledge_level",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": "knowledge_assertion",
+              "value_type_id": null,
+              "value_url": null
+            }
+          ],
+          "object": "MONDO:0004979",
+          "predicate": "biolink:in_clinical_trials_for",
+          "qualifiers": null,
+          "sources": [
+            {
+              "resource_id": "infores:multiomics-clinicaltrials",
+              "resource_role": "primary_knowledge_source",
+              "source_record_urls": null,
+              "upstream_resource_ids": null
+            },
+            {
+              "resource_id": "infores:rtx-kg2",
+              "resource_role": "aggregator_knowledge_source",
+              "source_record_urls": null,
+              "upstream_resource_ids": [
+                "infores:multiomics-clinicaltrials"
+              ]
+            }
+          ],
+          "subject": "CHEBI:31690"
+        },
+        "46686478": {
+          "attributes": [
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:original_predicate",
+              "attributes": null,
+              "description": "The IDs of the original RTX-KG2pre edge(s) corresponding to this edge prior to any synonymization or remapping.",
+              "original_attribute_name": null,
+              "value": [
+                "CHEBI:45783---biolink:applied_to_treat---None---None---None---MONDO:0004979---DrugApprovalsKG:"
+              ],
+              "value_type_id": "metatype:String",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:agent_type",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": "manual_agent",
+              "value_type_id": null,
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:knowledge_level",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": "knowledge_assertion",
+              "value_type_id": null,
+              "value_url": null
+            }
+          ],
+          "object": "MONDO:0004979",
+          "predicate": "biolink:applied_to_treat",
+          "qualifiers": null,
+          "sources": [
+            {
+              "resource_id": "infores:multiomics-drugapprovals",
+              "resource_role": "primary_knowledge_source",
+              "source_record_urls": null,
+              "upstream_resource_ids": null
+            },
+            {
+              "resource_id": "infores:rtx-kg2",
+              "resource_role": "aggregator_knowledge_source",
+              "source_record_urls": null,
+              "upstream_resource_ids": [
+                "infores:multiomics-drugapprovals"
+              ]
+            }
+          ],
+          "subject": "CHEBI:31690"
+        }
+      },
+      "nodes": {
+        "CHEBI:31690": {
+          "attributes": [
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:category",
+              "attributes": null,
+              "description": "Category of the canonical identifier for this node in RTX-KG2.",
+              "original_attribute_name": null,
+              "value": "biolink:MolecularMixture",
+              "value_type_id": "metatype:Uriorcurie",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:synonym",
+              "attributes": null,
+              "description": "Names of all nodes in this synonym set in RTX-KG2.",
+              "original_attribute_name": null,
+              "value": [
+                "Imatinib Mesylate",
+                "imatinib 400 MG Oral Tablet",
+                "imatinib Oral Product",
+                "imatinib mesylate",
+                "Gleevec Oral Product",
+                "Gleevec Pill",
+                "imatinib methanesulfonate",
+                "imatinib 100 MG Oral Capsule",
+                "imatinib",
+                "imatinib 100 MG Oral Tablet",
+                "imatinib 100 MG [Gleevec]",
+                "imatinib Oral Capsule",
+                "IMATINIB MESYLATE",
+                "imatinib 400 MG [Gleevec]",
+                "Imatinib",
+                "imatinib Oral Tablet",
+                "Imatinib, 100 mg",
+                "imatinib Oral Tablet [Gleevec]",
+                "imatinib 50 MG",
+                "Gleevec",
+                "imatinib 100 MG Oral Tablet [Gleevec]",
+                "imatinib 100 MG",
+                "IMATINIB",
+                "gleevec",
+                "imatinib 50 MG Oral Capsule",
+                "imatinib 400 MG",
+                "imatinib 400 MG Oral Capsule",
+                "imatinib 400 MG Oral Tablet [Gleevec]",
+                "imatinib Pill",
+                "STI-571",
+                "Imatinib mesylate (USAN)"
+              ],
+              "value_type_id": "metatype:String",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:IriType",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": "http://purl.obolibrary.org/obo/CHEBI_31690",
+              "value_type_id": "metatype:Uri",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:description",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": "A tyrosine kinase inhibitor and ANTINEOPLASTIC AGENT that inhibits the BCR-ABL kinase created by chromosome rearrangements in CHRONIC MYELOID LEUKEMIA and ACUTE LYMPHOBLASTIC LEUKEMIA, as well as PDG-derived tyrosine kinases that are overexpressed in gastrointestinal stromal tumors.; The mesylate salt of imatinib, a tyrosine kinase inhibitor with antineoplastic activity. Imatinib binds to an intracellular pocket located within tyrosine kinases (TK), thereby inhibiting ATP binding and preventing phosphorylation and the subsequent activation of growth receptors and their downstream signal transduction pathways. This agent inhibits TK encoded by the bcr-abl oncogene as well as receptor TKs encoded by the c-kit and platelet-derived growth factor receptor (PDGFR) oncogenes. Inhibition of the bcr-abl TK results in decreased proliferation and enhanced apoptosis in malignant cells of Philadelphia-positive (Ph+) hematological malignancies such as CML and ALL; effects on c-kit TK activity inhibit mast-cell and cellular proliferation in those diseases overexpressing c-kit, such as mastocytosis and gastrointestinal stromal tumor (GIST).; The mesylate salt of imatinib, a tyrosine kinase inhibitor with antineoplastic activity. Imatinib binds to an intracellular pocket located within tyrosine kinases (TK), thereby inhibiting ATP binding and preventing phosphorylation and the subsequent activation of growth receptors and their downstream signal transduction pathways. This agent inhibits TK encoded by the bcr-abl oncogene as well as receptor TKs encoded by the c-kit and platelet-derived growth factor receptor (PDGFR) oncogenes. Inhibition of the bcr-abl TK results in decreased proliferation and enhanced apoptosis in malignant cells of Philadelphia-positive (Ph+) hematological malignancies such as CML and ALL; effects on c-kit TK activity inhibit mast-cell and cellular proliferation in those diseases overexpressing c-kit, such as mastocytosis and gastrointestinal stromal tumor (GIST). Check for \"https://www.cancer.gov/about-cancer/treatment/clinical-trials/intervention/C1687\" active clinical trials using this agent. (\"http://ncit.nci.nih.gov/ncitbrowser/ConceptReport.jsp?dictionary=NCI%20Thesaurus&code=C1687\" NCI Thesaurus); UMLS Semantic Type: STY:T109; UMLS Semantic Type: STY:T121",
+              "value_type_id": "metatype:String",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:publications",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": [
+                "PMID:21417343",
+                "PMID:20153202",
+                "PMID:18678495",
+                "PMID:35944901",
+                "PMID:20014752",
+                "PMID:26850004",
+                "PMID:12951113",
+                "PMID:14552760",
+                "PMID:31097376",
+                "PMID:32428794"
+              ],
+              "value_type_id": "biolink:Uriorcurie",
+              "value_url": null
+            }
+          ],
+          "categories": [
+            "biolink:MolecularMixture",
+            "biolink:SmallMolecule",
+            "biolink:Drug"
+          ],
+          "is_set": false,
+          "name": "imatinib methanesulfonate"
+        },
+        "MONDO:0004979": {
+          "attributes": [
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:category",
+              "attributes": null,
+              "description": "Category of the canonical identifier for this node in RTX-KG2.",
+              "original_attribute_name": null,
+              "value": "biolink:Disease",
+              "value_type_id": "metatype:Uriorcurie",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:synonym",
+              "attributes": null,
+              "description": "Names of all nodes in this synonym set in RTX-KG2.",
+              "original_attribute_name": null,
+              "value": [
+                "Asthma",
+                "Reactive airway disease",
+                "bronchial hyperreactivity",
+                "asthma",
+                "Bronchial Hyperreactivity"
+              ],
+              "value_type_id": "metatype:String",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:IriType",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": "http://purl.obolibrary.org/obo/MONDO_0004979",
+              "value_type_id": "metatype:Uri",
+              "value_url": null
+            },
+            {
+              "attribute_source": "infores:rtx-kg2",
+              "attribute_type_id": "biolink:description",
+              "attributes": null,
+              "description": null,
+              "original_attribute_name": null,
+              "value": "Asthma is characterized by increased responsiveness of the tracheobronchial tree to multiple stimuli, leading to narrowing of the air passages with resultant dyspnea, cough, and wheezing. [HPO:probinson]; UMLS Semantic Type: STY:T047; Asthma is characterized by increased responsiveness of the tracheobronchial tree to multiple stimuli, leading to narrowing of the air passages with resultant dyspnea, cough, and wheezing.; Asthma is characterized by increased responsiveness of the tracheobronchial tree to multiple stimuli, leading to narrowing of the air passages with resultant dyspnea, cough, and wheezing.; ; Asthma is characterized by increased responsiveness of the tracheobronchial tree to multiple stimuli, leading to narrowing of the air passages with resultant dyspnea, cough, and wheezing.",
+              "value_type_id": "metatype:String",
+              "value_url": null
+            }
+          ],
+          "categories": [
+            "biolink:Disease"
+          ],
+          "is_set": false,
+          "name": "asthma"
+        }
+      }
+    },
+    "query_graph": {
+      "nodes": {
+        "n1": {
+          "categories": null,
+          "constraints": [],
+          "ids": [
+            "CHEBI:31690"
+          ],
+          "is_set": false,
+          "option_group_id": null,
+          "set_id": null,
+          "set_interpretation": null
+        },
+        "n2": {
+          "categories": null,
+          "constraints": [],
+          "ids": [
+            "MONDO:0004979"
+          ],
+          "is_set": false,
+          "option_group_id": null,
+          "set_id": null,
+          "set_interpretation": null
+        }
+      },
+      "paths": {
+        "p1": {
+          "constraints": null,
+          "object": "n2",
+          "predicates": null,
+          "subject": "n1"
+        }
+      }
+    },
+    "results": [
+      {
+        "analyses": [
+          {
+            "attributes": null,
+            "path_bindings": {
+              "p0": [
+                {
+                  "id": "aux_1"
+                }
+              ]
+            },
+            "resource_id": "infores:arax",
+            "score": 0.99,
+            "scoring_method": null,
+            "support_graphs": null
+          }
+        ],
+        "confidence": null,
+        "description": null,
+        "essence": "result",
+        "essence_category": null,
+        "id": "result",
+        "node_bindings": {
+          "n1": [
+            {
+              "attributes": [],
+              "id": "CHEBI:31690",
+              "query_id": null
+            }
+          ],
+          "n2": [
+            {
+              "attributes": [],
+              "id": "MONDO:0004979",
+              "query_id": null
+            }
+          ]
+        },
+        "resource_id": "infores:arax",
+        "result_group": null,
+        "result_group_similarity_score": null,
+        "row_data": null,
+        "score": null,
+        "score_direction": null,
+        "score_name": null
+      }
+    ]
+  },
+  "operations": {
+    "actions": [
+      "add_qnode(key=n1,ids=CHEBI:31690)",
+      "add_qnode(key=n2,ids=MONDO:0004979)",
+      "add_qpath(key=p1,subject=n1,object=n2)",
+      "connect(action=connect_nodes,max_path_length=1,max_pathfinder_paths=100)",
+      ""
+    ]
+  },
+  "original_question": null,
+  "query_options": {
+    "kp_timeout": "30",
+    "max_path_length": "4",
+    "max_pathfinder_paths": "500",
+    "prune_threshold": "50",
+    "query_plan": {
+      "counter": 0,
+      "qedge_keys": {}
+    }
+  },
+  "resource_id": "ARAX",
+  "restated_question": null,
+  "schema_version": "1.6.0",
+  "status": "Success",
+  "submitter": "ARAX GUI",
+  "table_column_names": null,
+  "tool_version": "ARAX 1.6.2",
+  "total_results_count": null,
+  "type": "translator_reasoner_response",
+  "validation_result": null,
+  "workflow": null
+}
