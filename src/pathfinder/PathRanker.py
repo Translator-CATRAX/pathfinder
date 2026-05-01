@@ -7,14 +7,13 @@ from pathfinder.core.model.PathContainer import PathContainer
 from pathfinder.core.repo.repo_factory import get_repo
 
 class PathRanker:
-    def __init__(self, repo_name, plover_url, ngd_url, degree_url, logger):
+    def __init__(self, repo_name, plover_url, ngd_url, degree_url):
         self.repo_name = repo_name
         self.plover_url = plover_url
         self.ngd_url = ngd_url
         self.degree_url = degree_url
-        self.degree_threshold = 10000000
+        self.degree_threshold = 40000
         self.prune_top_k = 10000000
-        self.logger = logger
 
     def rank_path(self, trapi_structure):
         edges = trapi_structure["message"]["knowledge_graph"]["edges"]
@@ -37,9 +36,9 @@ class PathRanker:
             path_queue.put(new_path)
             path_container.add_new_path(new_path)
 
-        repo = get_repo(self.repo_name, self.plover_url, self.ngd_url, self.degree_url)
+        repo = get_repo(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, self.degree_threshold)
 
-        traverse(repo, path_queue, path_container, self.prune_top_k, self.degree_threshold, self.logger)
+        traverse(repo, path_queue, path_container, self.prune_top_k, self.degree_threshold)
 
         for _, paths in path_container.path_dict.items():
             for path in paths:
@@ -58,8 +57,8 @@ class PathRanker:
         sub_id = trapi_structure["message"]["query_graph"]["nodes"][subject_node]["ids"][0]
         obj_id = trapi_structure["message"]["query_graph"]["nodes"][object_node]["ids"][0]
 
-        nodes = {}
         for analyses in trapi_structure["message"]["results"][0]["analyses"]:
+            nodes = {}
             aux_id = next(iter(analyses["path_bindings"].values()))[0]["id"]
             edges = trapi_structure["message"]["auxiliary_graphs"][aux_id]["edges"]
             for edge_id in edges:
@@ -87,18 +86,16 @@ class PathRanker:
                         next_item = neighbor
                         break
                 prev = current
-# TODO: Not completed.
 
+            path = Path(0, None)
+            for i in range(len(node_list)):
+                if i == len(node_list) - 1:
+                    next_node = neighbors_by_node[Node(node_list[i])][node_list[i - 1]]
+                    current = neighbors_by_node[Node(node_list[i - 1])][node_list[i]]
+                else:
+                    next_node = neighbors_by_node[Node(node_list[i])][node_list[i + 1]]
+                    current = neighbors_by_node[Node(node_list[i + 1])][node_list[i]]
+                current.weight = (current.weight + next_node.weight) / 2
+                path = path.make_new_path(current, None)
 
-
-
-
-
-
-
-
-
-
-
-
-
+            analyses["score"] = path.compute_weight()
