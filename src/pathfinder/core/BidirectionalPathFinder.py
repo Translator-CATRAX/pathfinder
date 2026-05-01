@@ -55,8 +55,17 @@ class BidirectionalPathFinder:
             f1 = ex.submit(run_bfs_process, hops_numbers_1, node_id_1, repo_args, self.prune_top_k, self.degree_threshold)
             f2 = ex.submit(run_bfs_process, hops_numbers_2, node_id_2, repo_args, self.prune_top_k, self.degree_threshold)
 
-            path_container_1 = f1.result()
-            path_container_2 = f2.result()
+            try:
+                path_container_1 = f1.result()
+            except Exception as e:
+                self.logger.error(f"Process 1 with curie id: {node_id_1} failed with exception: {e}")
+                path_container_1 = None
+
+            try:
+                path_container_2 = f2.result()
+            except Exception as e:
+                self.logger.error(f"Process 2 with curie id: {node_id_2} failed with exception: {e}")
+                path_container_2 = None
 
         intersection_list = path_container_1.path_dict.keys() & path_container_2.path_dict.keys()
 
