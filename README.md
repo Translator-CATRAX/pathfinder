@@ -1,6 +1,6 @@
 # catrax-pathfinder
 
-`catrax-pathfinder` is a Python package for discovering and returning candidate paths between two CURIE nodes using a PloverDB endpoint and precomputed databases (NGD and node degree). It supports **SQLite** and **MySQL** backends for both the NGD and degree repositories via a simple URL prefix.
+`catrax-pathfinder` is a Python package for discovering and returning candidate paths between two CURIE nodes using a Biological Knowledge Graph and precomputed databases (NGD and node degree). It supports **SQLite** and **MySQL** backends for both the NGD and degree repositories via a simple URL prefix.
 
 ---
 
@@ -14,7 +14,7 @@ pip install catrax-pathfinder
 
 ## Obtain databases
 
-You will need a compatible curie_ngd_v1.0_KG and kg2c_v1.0_KG SQLite database for the KG version you are using.
+You will need a compatible curie_ngd and tier0-info-for-overlay SQLite database for the KG version you are using.
 
 - **Recommended**: Ask a team member for mysql urls to these databases
 - **Alternative**: Ask a team member for local copies of these databases
@@ -26,10 +26,10 @@ You will need a compatible curie_ngd_v1.0_KG and kg2c_v1.0_KG SQLite database fo
 ```python
 from pathfinder.Pathfinder import Pathfinder
 
-plover_url = "https://kg2cploverdb.ci.transltr.io"
+gandalf_path = "gandalf:./gandalf_mmap"
 
-ngd_url = "sqlite:curie_ngd_v1.0_KG2.10.2.sqlite"
-degree_url = "sqlite:kg2c_v1.0_KG2.10.2.sqlite"
+ngd_url = "sqlite:curie_ngd_v1.0_tier0-20260408.sqlite"
+degree_url = "sqlite:tier0-info-for-overlay_v1.0_tier0-20260408"
 
 # Optional filters
 blocked_curies = set([
@@ -44,7 +44,7 @@ logger = None
 
 pathfinder = Pathfinder(
     repository_name="MLRepo",
-    plover_url=plover_url,
+    repo_uri=gandalf_path,
     ngd_url=ngd_url,
     degree_url=degree_url,
     blocked_curies=blocked_curies,
@@ -77,7 +77,7 @@ Constructor:
 ```python
 Pathfinder(
     repository_name: str,
-    plover_url: str,
+    repo_uri: str,
     ngd_url: str,
     degree_url: str,
     blocked_curies: Set[str],
@@ -89,7 +89,7 @@ Pathfinder(
 #### Parameters
 
 - **repository_name**: For now, this should always be `"MLRepo"`.
-- **plover_url**: URL of the PloverDB endpoint (example: `https://kg2cploverdb.ci.transltr.io`).
+- **repo_uri**: A path to gandalf memory-mapped directory.
 - **ngd_url**: Connection string for the *CURIE-NGD* repository (SQLite or MySQL).
 - **degree_url**: Connection string for the *node degree* repository (SQLite or MySQL).
 - **blocked_curies**: A set of CURIE IDs; any path that passes through these CURIEs is dropped.
