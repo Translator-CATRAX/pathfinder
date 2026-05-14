@@ -61,7 +61,7 @@ def get_np_array_features(
 
 
 def get_category(cat_str, category_to_idx):
-    cat_onehot = np.zeros(58, dtype=float)
+    cat_onehot = np.zeros(len(category_to_idx), dtype=float)
 
     if cat_str:
         if cat_str in category_to_idx:
