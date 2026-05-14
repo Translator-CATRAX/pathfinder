@@ -176,7 +176,7 @@ def ensure_downloaded_and_verified(
         local_path: Path,
         key_path: str | None = None,
         password: str | None = None,
-) -> None:
+) -> bool:
     ssh = connect_ssh(
         host=host,
         username=username,
@@ -187,10 +187,11 @@ def ensure_downloaded_and_verified(
     try:
         if local_path.exists() and local_path.is_file():
             logging.info(f"Local file exists: {local_path}")
-            return
+            return False
 
         logging.info(f"Downloading from {host}:{remote_path} -> {local_path}")
         download_sftp_with_progress(ssh=ssh, remote_path=remote_path, local_path=local_path)
         logging.info("✅ Downloaded and verified successfully.")
     finally:
         ssh.close()
+    return True

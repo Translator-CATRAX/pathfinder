@@ -288,7 +288,7 @@ def download_databases(
 
     remote_path_gandalf_mmap = f"~/tier0-{kg_version}/{gandalf_mmap}"
     local_path_gandalf_mmap = out_dir / gandalf_mmap
-    ensure_downloaded_and_verified(
+    downloaded = ensure_downloaded_and_verified(
         host=host,
         username=username,
         port=port,
@@ -297,7 +297,8 @@ def download_databases(
         key_path=key_path,
         password=password,
     )
-    extract_tar_gz(local_path_gandalf_mmap)
+    if downloaded:
+        extract_tar_gz(local_path_gandalf_mmap)
 
 def parse_args():
     parser = argparse.ArgumentParser(
