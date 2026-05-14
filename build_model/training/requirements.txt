@@ -1,5 +1,8 @@
 # Python 3.12
 
+gandalf-csr
+pydantic-settings>=2.12.0
+orjson>=3.9.0
 node-synonymizer==0.1.1
 xgboost==2.1.4
 biolink-helper-pkg==1.0.0
