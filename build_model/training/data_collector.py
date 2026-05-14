@@ -9,26 +9,22 @@ from pathfinder.core.feature_extractor import get_neighbors_info
 from pathfinder.core.feature_extractor import get_np_array_features
 from pathfinder.core.repo.NGDRepository import NGDRepository
 from pathfinder.core.repo.NodeDegreeRepo import NodeDegreeRepo
-from pathfinder.core.repo.PloverDBRepo import PloverDBRepo
+from pathfinder.core.repo.GandalfRepo import GandalfRepo
 from tqdm import tqdm
 
 from constants import (node_degree_sqlite_prefix_name,
-                       curie_ngd_sqlite_prefix_name,
-                       node_synonymizer_sqlite_prefix_name)
-from node_synonymizer import NodeSynonymizer
+                       curie_ngd_sqlite_prefix_name)
 
 
 class DataCollector:
 
-    def __init__(self, kg_version, plover_url, db_directory, output_directory):
+    def __init__(self, kg_version, db_directory, output_directory):
         self.node_degree_repo = NodeDegreeRepo(
             os.path.join(db_directory, f"{node_degree_sqlite_prefix_name}{kg_version}.sqlite"))
         self.ngd_repo = NGDRepository(os.path.join(db_directory, f"{curie_ngd_sqlite_prefix_name}{kg_version}.sqlite"))
-        self.node_synonymizer = NodeSynonymizer(
-            os.path.join(db_directory, f"{node_synonymizer_sqlite_prefix_name}{kg_version}.sqlite"))
         self.output_directory = output_directory
         Path(output_directory).mkdir(parents=True, exist_ok=True)
-        self.plover_repo = PloverDBRepo(plover_url, self.node_degree_repo)
+        self.repo = GandalfRepo(30000, db_directory, self.node_degree_repo)
 
     def gather_data(self, input_data, feature_structure):
 
@@ -49,7 +45,7 @@ class DataCollector:
                 content_by_curie, curie_category = get_neighbors_info(
                     key_nodes_pair[0],
                     self.ngd_repo,
-                    self.plover_repo,
+                    self.repo,
                     self.node_degree_repo
                 )
             except Exception as e:

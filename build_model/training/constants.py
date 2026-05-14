@@ -1,6 +1,6 @@
-node_degree_sqlite_prefix_name = "kg2c_v1.0_KG"
-curie_ngd_sqlite_prefix_name = "curie_ngd_v1.0_KG"
-node_synonymizer_sqlite_prefix_name = "node_synonymizer_v1.0_KG"
+node_degree_sqlite_prefix_name = "tier0-info-for-overlay_v1.0_tier0-"
+curie_ngd_sqlite_prefix_name = "curie_ngd_v1.0_tier0-"
+gandalf_mmap_prefix_name = "gandalf_mmap_tier0-"
 
 KEGG_DATA_SOURCE = "KEGG"
 DRUGBANK_TRAIN_DATA_SOURCE = "Drugbank_train"

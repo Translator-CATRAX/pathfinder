@@ -3,10 +3,8 @@ import os
 import pickle
 
 from pathfinder.core.repo.NodeDegreeRepo import NodeDegreeRepo
-
-from constants import (node_degree_sqlite_prefix_name,
-                       node_synonymizer_sqlite_prefix_name)
 from node_synonymizer import NodeSynonymizer
+from constants import (node_degree_sqlite_prefix_name)
 
 
 class FeatureStructure:
@@ -14,8 +12,7 @@ class FeatureStructure:
     def __init__(self, kg_version, db_directory, biolink_helper):
         self.node_degree_repo = NodeDegreeRepo(
             os.path.join(db_directory, f"{node_degree_sqlite_prefix_name}{kg_version}.sqlite"))
-        self.node_synonymizer = NodeSynonymizer(
-            os.path.join(db_directory, f"{node_synonymizer_sqlite_prefix_name}{kg_version}.sqlite"))
+        self.node_synonymizer = NodeSynonymizer()
         self.biolink_helper = biolink_helper
 
         self.degree_category_to_idx = self.get_degree_category_to_idx()

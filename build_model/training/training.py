@@ -6,6 +6,7 @@ import pathlib
 import pickle
 import random
 import re
+import tarfile
 from datetime import datetime
 
 import numpy as np
@@ -19,7 +20,7 @@ from biolink_helper_pkg import BiolinkHelper
 
 from constants import (node_degree_sqlite_prefix_name,
                        curie_ngd_sqlite_prefix_name,
-                       node_synonymizer_sqlite_prefix_name,
+                       gandalf_mmap_prefix_name,
                        KEGG_DATA_SOURCE,
                        DRUGBANK_DATA_SOURCE,
                        DRUGBANK_TRAIN_DATA_SOURCE,
@@ -232,6 +233,19 @@ def feature_importance():
     # plot_importance(bst_loaded, importance_type='cover')
     plt.savefig("feature_importance_cover.png")
 
+def extract_tar_gz(file_name):
+    # Ensure the file exists before trying to open it
+    if not os.path.exists(file_name):
+        print(f"Error: The file '{file_name}' was not found.")
+        return
+
+    try:
+        with tarfile.open(file_name, "r:gz") as tar:
+            # Extracting all contents to the current working directory
+            tar.extractall(path=".")
+            print(f"Successfully extracted '{file_name}' to the current directory.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 def download_databases(
         *,
@@ -245,10 +259,10 @@ def download_databases(
 ):
     node_degree_dbname = f"{node_degree_sqlite_prefix_name}{kg_version}.sqlite"
     curie_ngd_dbname = f"{curie_ngd_sqlite_prefix_name}{kg_version}.sqlite"
-    synonymizer_dbname = f"{node_synonymizer_sqlite_prefix_name}{kg_version}.sqlite"
+    gandalf_mmap = f"{gandalf_mmap_prefix_name}{kg_version}.tar.gz"
     out_dir = pathlib.Path(out_dir_str)
 
-    remote_path_node_degree_db = f"~/KG{kg_version}/{node_degree_dbname}"
+    remote_path_node_degree_db = f"~/tier0-{kg_version}/{node_degree_dbname}"
     local_path_node_degree_db = out_dir / node_degree_dbname
     ensure_downloaded_and_verified(
         host=host,
@@ -260,19 +274,7 @@ def download_databases(
         password=password,
     )
 
-    remote_path_synonymizer_db = f"~/KG{kg_version}/{synonymizer_dbname}"
-    local_path_synonymizer_db = out_dir / synonymizer_dbname
-    ensure_downloaded_and_verified(
-        host=host,
-        username=username,
-        port=port,
-        remote_path=remote_path_synonymizer_db,
-        local_path=local_path_synonymizer_db,
-        key_path=key_path,
-        password=password,
-    )
-
-    remote_path_curie_ngd_db = f"~/KG{kg_version}/{curie_ngd_dbname}"
+    remote_path_curie_ngd_db = f"~/tier0-{kg_version}/{curie_ngd_dbname}"
     local_path_curie_ngd_db = out_dir / curie_ngd_dbname
     ensure_downloaded_and_verified(
         host=host,
@@ -284,12 +286,18 @@ def download_databases(
         password=password,
     )
 
-
-def kg_version_validator(value: str) -> str:
-    if not re.fullmatch(r"\d+\.\d+\.\d+", value):
-        raise argparse.ArgumentTypeError("KG version must look like X.Y.Z (e.g. 2.10.2)")
-    return value
-
+    remote_path_gandalf_mmap = f"~/tier0-{kg_version}/{gandalf_mmap}"
+    local_path_gandalf_mmap = out_dir / gandalf_mmap
+    ensure_downloaded_and_verified(
+        host=host,
+        username=username,
+        port=port,
+        remote_path=remote_path_gandalf_mmap,
+        local_path=local_path_gandalf_mmap,
+        key_path=key_path,
+        password=password,
+    )
+    extract_tar_gz(local_path_gandalf_mmap)
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -298,17 +306,9 @@ def parse_args():
 
     parser.add_argument(
         "--kg-version",
-        type=kg_version_validator,
         required=True,
         metavar="VERSION",
-        help="Knowledge graph version (e.g. 2.10.2)",
-    )
-
-    parser.add_argument(
-        "--plover-url",
-        type=str,
-        required=True,
-        help="PloverDB URL",
+        help="Knowledge graph version",
     )
 
     parser.add_argument(
@@ -381,7 +381,7 @@ if __name__ == "__main__":
 
     feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
 
-    DataCollector(kg_version, args.plover_url, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+    DataCollector(kg_version, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
         input_data, feature_structure)
 
     x, y, group = load_data(args.out_dir, data_source, shuffled=True)
