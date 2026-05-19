@@ -59,6 +59,12 @@ def get_np_array_features(
 
     return np.concatenate([[ngd_val, pmid_val], cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature])
 
+def get_edge_categories_start_end_index(curie_category_length, edge_category_length):
+    start = curie_category_length + 2 # 2 for ngd_value and pmid_value
+    end = start + edge_category_length
+    return start, end
+
+
 
 def get_category(cat_str, category_to_idx):
     cat_onehot = np.zeros(len(category_to_idx), dtype=float)

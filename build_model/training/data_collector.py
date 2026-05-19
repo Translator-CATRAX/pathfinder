@@ -24,7 +24,7 @@ class DataCollector:
         self.ngd_repo = NGDRepository(os.path.join(db_directory, f"{curie_ngd_sqlite_prefix_name}{kg_version}.sqlite"))
         self.output_directory = output_directory
         Path(output_directory).mkdir(parents=True, exist_ok=True)
-        self.repo = GandalfRepo(30000, f"{db_directory}/gandalf_mmap", self.node_degree_repo)
+        self.repo = GandalfRepo(100000, f"{db_directory}/gandalf_mmap", self.node_degree_repo)
 
     def gather_data(self, input_data, feature_structure):
 
@@ -90,6 +90,7 @@ class DataCollector:
         for i in range(len(x_list)):
             x[i] = x_list[i]
 
+        os.makedirs(self.output_directory, exist_ok=True)
         np.save(f"{self.output_directory}/X_data.npy", x)
         np.save(f"{self.output_directory}/y_data.npy", y)
         with open(f"{self.output_directory}/group.pkl", "wb") as f:

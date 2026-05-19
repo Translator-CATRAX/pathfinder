@@ -27,6 +27,7 @@ from constants import (node_degree_sqlite_prefix_name,
                        DRUGBANK_TEST_DATA_SOURCE,
                        BIOLINK_VERSION)
 from data_collector import DataCollector
+from normalization import normalized_legacy_dataset
 from feature_structure import FeatureStructure
 from constants import SHUFFLED_DIR
 from db_build.download_script import ensure_downloaded_and_verified
@@ -361,6 +362,12 @@ def get_biolink_helper():
     pathlib.Path(biolink_cache_dir).mkdir(parents=True, exist_ok=True)
     return BiolinkHelper(BIOLINK_VERSION, biolink_cache_dir)
 
+class MockFeatureStructure:
+    def __init__(self):
+        with open(f"src/pathfinder/resources/edge_category_to_idx.pkl", "rb") as file:
+            self.edge_category_to_idx = pickle.load(file)
+        with open(f"src/pathfinder/resources/sorted_category_list.pkl", "rb") as file:
+            self.category_to_idx = pickle.load(file)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -368,6 +375,7 @@ if __name__ == "__main__":
     args = parse_args()
     kg_version = args.kg_version
     data_source = DRUGBANK_DATA_SOURCE
+    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
     download_databases(
         kg_version=kg_version,
         host=args.db_host,
@@ -378,15 +386,16 @@ if __name__ == "__main__":
         out_dir_str=args.out_dir
     )
     input_data = create_training_data(data_source)
-    logging.info(f"Training on {len(input_data)}")
+    input_data = normalized_legacy_dataset(input_data)
 
-    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+    logging.info(f"Training on {len(input_data)}")
 
     DataCollector(kg_version, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
         input_data, feature_structure)
 
-    x, y, group = load_data(args.out_dir, data_source, shuffled=True)
+    x, y, group = load_data(args.out_dir, data_source, shuffled=False)
+    x, y, group = shuffle(x, y, group, args.out_dir, data_source)
 
-    updated_y = binary_labels_to_importance_labels_converter(x, y)
+    updated_y = binary_labels_to_importance_labels_converter(x, y, feature_structure)
 
     train(x, updated_y, group, kg_version)
