@@ -1,101 +1,98 @@
-import queue
+import heapq
+import itertools
 
-from pathfinder.core.BreadthFirstSearch import traverse
+from pathfinder.core.repo.LocalRepo import LocalRepo
+from pathfinder.core.repo.MLRepo import MLRepo
+from pathfinder.core.repo.repo_factory import get_repo
 from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Path import Path
-from pathfinder.core.model.PathContainer import PathContainer
-from pathfinder.core.repo.repo_factory import get_repo
+from pathfinder.core.repo.repo_factory import get_degree_repo, get_ngd_repo
+
 
 class PathRanker:
-    def __init__(self, repo_name, plover_url, ngd_url, degree_url):
+
+    def __init__(self, repo_name, repo_uri, ngd_url, degree_url, max_size=0):
         self.repo_name = repo_name
-        self.plover_url = plover_url
+        self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
-        self.degree_threshold = 40000
-        self.prune_top_k = 10000000
+        self.max_size = max_size
 
-    def rank_path(self, trapi_structure):
-        edges = trapi_structure["message"]["knowledge_graph"]["edges"]
-        neighbors_by_node = {}
-        for _, value in edges.items():
-            n1 = Node(value["object"])
-            n2 = Node(value["subject"])
-            if n1 not in neighbors_by_node:
-                neighbors_by_node[n1] = {}
-            neighbors_by_node[n1][n2.id] = n2
-            if n2 not in neighbors_by_node:
-                neighbors_by_node[n2] = {}
-            neighbors_by_node[n2][n1.id] = n1
-        sorted_nodes = sorted(neighbors_by_node.items(), key=lambda kv: len(kv[1]), reverse=True)
+    def rank_path(self, pathfinder_response):
+        local_repo = LocalRepo(pathfinder_response)
 
-        path_container = PathContainer()
-        path_queue = queue.Queue()
-        for node, _ in sorted_nodes:
-            new_path = Path(1, [node])
-            path_queue.put(new_path)
-            path_container.add_new_path(new_path)
+        nodes = {}
+        ml_repo = MLRepo(local_repo, get_degree_repo(self.degree_url), get_ngd_repo(self.ngd_url))
+        for node in pathfinder_response["message"]["knowledge_graph"]["nodes"].keys():
+            node_neighbors = ml_repo.get_neighbors(Node(id=node), 10_000_000)
+            for neighbor in node_neighbors:
+                if node not in nodes:
+                    nodes[node] = {}
+                nodes[node][neighbor.id] = neighbor
 
-        repo = get_repo(self.repo_name, self.plover_url, self.ngd_url, self.degree_url, self.degree_threshold)
+        queried_path = next(iter(pathfinder_response["message"]["query_graph"]["paths"].values()))
+        src_pinned_node = queried_path["subject"]
+        dst_pinned_node = queried_path["object"]
+        src_node_id = pathfinder_response["message"]["query_graph"]["nodes"][src_pinned_node]["ids"][0]
+        dst_node_id = pathfinder_response["message"]["query_graph"]["nodes"][dst_pinned_node]["ids"][0]
 
-        traverse(repo, path_queue, path_container, self.prune_top_k, self.degree_threshold)
+        paths = []
+        tiebreaker = itertools.count()
 
-        for _, paths in path_container.path_dict.items():
-            for path in paths:
-                if len(path.links) != 2:
-                    continue
-                if path.links[0] in neighbors_by_node:
-                    if path.links[1].id in neighbors_by_node[path.links[0]]:
-                        neighbors_by_node[path.links[0]][path.links[1].id].weight = path.links[1].weight
-                        neighbors_by_node[path.links[0]][path.links[1].id].name = path.links[1].name
-                        neighbors_by_node[path.links[0]][path.links[1].id].degree = path.links[1].degree
-                        neighbors_by_node[path.links[0]][path.links[1].id].category = path.links[1].category
+        for analyses in pathfinder_response["message"]["results"][0]["analyses"]:
+            current_node = src_node_id
+            aux_id = next(iter(analyses["path_bindings"].values()))[0]['id']
+            links = []
+            links_set = set()
+            prev_weight = None
+            while current_node != dst_node_id:
+                for edge in pathfinder_response["message"]["auxiliary_graphs"][aux_id]["edges"]:
+                    if pathfinder_response["message"]["knowledge_graph"]["edges"][edge]['subject'] == current_node:
+                        connected_node = pathfinder_response["message"]["knowledge_graph"]["edges"][edge]['object']
+                    elif pathfinder_response["message"]["knowledge_graph"]["edges"][edge]['object'] == current_node:
+                        connected_node = pathfinder_response["message"]["knowledge_graph"]["edges"][edge]['subject']
+                    else:
+                        continue
+                    if connected_node in links_set:
+                        continue
+                    links_set.add(current_node)
+                    weight = nodes[connected_node][current_node].weight
+                    if prev_weight is not None:
+                        weight = (weight + prev_weight) / 2
+                    links.append(
+                        Node(
+                            id=current_node,
+                            weight=weight,
+                            name=nodes[connected_node][current_node].name,
+                            degree=nodes[connected_node][current_node].degree,
+                            category=nodes[connected_node][current_node].category
+                        )
+                    )
+                    prev_weight = nodes[current_node][connected_node].weight
+                    if connected_node == dst_node_id:
+                        links.append(
+                            Node(
+                                id=connected_node,
+                                weight=nodes[current_node][connected_node].weight,
+                                name=nodes[current_node][connected_node].name,
+                                degree=nodes[current_node][connected_node].degree,
+                                category=nodes[current_node][connected_node].category
+                            )
+                        )
+                    current_node = connected_node
+                    break
 
-        path = next(iter(trapi_structure["message"]["query_graph"]["paths"].values()))
-        subject_node = path["subject"]
-        object_node = path["object"]
-        sub_id = trapi_structure["message"]["query_graph"]["nodes"][subject_node]["ids"][0]
-        obj_id = trapi_structure["message"]["query_graph"]["nodes"][object_node]["ids"][0]
-
-        for analyses in trapi_structure["message"]["results"][0]["analyses"]:
-            nodes = {}
-            aux_id = next(iter(analyses["path_bindings"].values()))[0]["id"]
-            edges = trapi_structure["message"]["auxiliary_graphs"][aux_id]["edges"]
-            for edge_id in edges:
-                edge = trapi_structure["message"]["knowledge_graph"]["edges"][edge_id]
-                obj = edge["object"]
-                sub = edge["subject"]
-                if sub in nodes:
-                    nodes[sub].append(obj)
+            path = Path(0, links)
+            weight = path.compute_weight()
+            count = next(tiebreaker)
+            if self.max_size != 0:
+                if len(paths) < self.max_size:
+                    heapq.heappush(paths, (weight, count, path))
                 else:
-                    nodes[sub] = [obj]
-                if obj in nodes:
-                    nodes[obj].append(sub)
-                else:
-                    nodes[obj] = [sub]
+                    if weight > paths[0][0]:
+                        heapq.heappushpop(paths, (weight, count, path))
+            analyses["score"] = weight
 
-            node_list = []
-            next_item = sub_id
-            prev = None
-            while next_item != None:
-                current = next_item
-                node_list.append(current)
-                next_item = None
-                for neighbor in nodes[current]:
-                    if neighbor != prev:
-                        next_item = neighbor
-                        break
-                prev = current
+        paths = sorted(paths, key=lambda x: x[0], reverse=True)
 
-            path = Path(0, None)
-            for i in range(len(node_list)):
-                if i == len(node_list) - 1:
-                    next_node = neighbors_by_node[Node(node_list[i])][node_list[i - 1]]
-                    current = neighbors_by_node[Node(node_list[i - 1])][node_list[i]]
-                else:
-                    next_node = neighbors_by_node[Node(node_list[i])][node_list[i + 1]]
-                    current = neighbors_by_node[Node(node_list[i + 1])][node_list[i]]
-                current.weight = (current.weight + next_node.weight) / 2
-                path = path.make_new_path(current, None)
-
-            analyses["score"] = path.compute_weight()
+        return pathfinder_response, [path for _, _, path in paths]

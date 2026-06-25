@@ -16,8 +16,9 @@ def test_rank_path():
         f"sqlite:{ngd_path}",
         f"sqlite:{kg2c_path}"
     )
-    path_ranker.rank_path(one_hop_query)
-    assert one_hop_query["message"]["results"][0]["analyses"][0]['score'] != 0.031344910561234354
-    assert one_hop_query["message"]["results"][0]["analyses"][0]['score'] > 0
+    assert one_hop_query["message"]["results"][0]["analyses"][0]['score'] == 0.031344910561234354
+    pathfinder_response, _ = path_ranker.rank_path(one_hop_query)
+    assert pathfinder_response["message"]["results"][0]["analyses"][0]['score'] != 0.031344910561234354
+    assert pathfinder_response["message"]["results"][0]["analyses"][0]['score'] > 0
 
-    json.dump(one_hop_query, open(HERE / "new_scores.json", "w"))
+    json.dump(pathfinder_response, open(HERE / "new_scores.json", "w"))
