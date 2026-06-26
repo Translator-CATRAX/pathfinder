@@ -20,7 +20,7 @@ fi
 # Convert 2026_04_08 -> 20260408
 DATE_NO_UNDERSCORE="${RELEASE_DATE//_/}"
 
-BASE_URL="https://kgx-storage.rtx.ai/releases/translator_kg/${RELEASE_DATE}"
+BASE_URL="https://kgx-storage.ci.transltr.io/releases/translator_kg/${RELEASE_DATE}"
 FILE_NAME="translator_kg.tar.zst"
 DOWNLOAD_URL="${BASE_URL}/${FILE_NAME}"
 
