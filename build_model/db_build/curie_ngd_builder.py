@@ -168,6 +168,7 @@ def get_kgx_version(kgx_path):
     kgx_metadata_file = Path(kgx_path) / "graph-metadata.json"
     with open(kgx_metadata_file, "r") as f:
         kgx_version = json.load(f)["version"]
+        logging.info(f"From metadata-KGX version: {kgx_version}")
     return kgx_version.replace("_", "")
 
 
