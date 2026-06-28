@@ -37,23 +37,25 @@ class Path:
         return penalty
 
     def compute_weight(self):
+        if len(self.links) == 2:
+            return 1
         weight_over_degree = []
         weight = []
         degree = []
-        for link in self.links:
+        for i, link in enumerate(self.links):
             if link.weight is None:
                 return 0
-            if link.degree > 0:
+            if link.degree > 0 and i != 0 and i != len(self.links) - 1:
                 degree.append(link.degree)
             if link.weight < 1:
                 weight.append(link.weight)
-                if link.degree > 1:
+                if link.degree > 1 and i != 0 and i != len(self.links) - 1:
                     weight_over_degree.append(link.weight / math.log(link.degree))
                 else:
                     weight_over_degree.append(link.weight)
 
         w_d_geo_mean = statistics.geometric_mean(weight_over_degree)
-        w_geo_mean = statistics.geometric_mean(weight_over_degree)
+        w_geo_mean = statistics.geometric_mean(weight)
 
         if len(degree) > 0:
             degree_penalty = self.calculate_degree_penalty(degree, 4)

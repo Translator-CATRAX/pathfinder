@@ -1,10 +1,10 @@
 class EdgeExtractorFromTRAPIResponse:
 
-    def __init__(self, trapi_response, logger):
+    def __init__(self, knowledge_graph, logger):
         self.logger = logger
         self.pairs_to_edge_ids = {}
-        self.knowledge_graph = trapi_response["message"]["knowledge_graph"]
-        for edge_id, info in trapi_response["message"]["knowledge_graph"]["edges"].items():
+        self.knowledge_graph = knowledge_graph
+        for edge_id, info in knowledge_graph["edges"].items():
             edge_key_1 = f"{info["object"]}--{info["subject"]}"
             edge_key_2 = f"{info["subject"]}--{info["object"]}"
             if self.pairs_to_edge_ids.get(edge_key_1) is None and self.pairs_to_edge_ids.get(edge_key_2) is None:

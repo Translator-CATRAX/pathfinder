@@ -176,6 +176,63 @@ class GandalfRepo:
         )
         return response
 
+    def get_2_hops_paths(self, src, dst, src_pinned_node, dst_pinned_node, min_information_content):
+        response = lookup(
+            self.graph,
+            {
+                "message": {
+                    "query_graph": {
+                        "nodes": {
+                            src_pinned_node: {"ids": [src]},
+                            "intermediate_0": {
+                                "categories": ["biolink:NamedThing"],
+                            },
+                            dst_pinned_node: {"ids": [dst]},
+                        },
+                        "edges": {
+                            "e0": {
+                                "subject": src_pinned_node,
+                                "object": "intermediate_0"
+                            },
+                            "e2": {
+                                "subject": "intermediate_0",
+                                "object": dst_pinned_node
+                            },
+                        },
+                    }
+                }
+            },
+            self.bmt,
+            subclass=False,
+            filter_config={"max_node_degree": self.node_degree_threshold, "min_information_content": min_information_content},
+            dehydrated=True,
+        )
+        return response
+
+    def get_1_hop_path(self, src, dst, src_pinned_node, dst_pinned_node, min_information_content):
+        response = lookup(
+            self.graph,
+            {
+                "message": {
+                    "query_graph": {
+                        "nodes": {
+                            src_pinned_node: {"ids": [src]},
+                            dst_pinned_node: {"ids": [dst]},
+                        },
+                        "edges": {
+                            "e0": {
+                                "subject": src_pinned_node,
+                                "object": dst_pinned_node
+                            }
+                        },
+                    }
+                }
+            },
+            self.bmt,
+            subclass=False,
+            dehydrated=True,
+        )
+        return response
 
     def get_node_degree(self, node_id):
         return self.degree_repo.get_node_degree(node_id)

@@ -1,3 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
+
 from pathfinder.PathRanker import PathRanker
 from pathfinder.converter.ResultPerPathConverter import ResultPerPathConverter
 from pathfinder.converter.EdgeExtractorFromTRAPIResponse import EdgeExtractorFromTRAPIResponse
@@ -7,7 +10,7 @@ from pathfinder.core.model.Path import Path
 from pathfinder.core.repo.repo_factory import get_repo, get_degree_repo
 
 
-def get_paths(trapi_response, src_node_id, dst_node_id, src_pinned_node, dst_pinned_node):
+def get_3_hops_paths(trapi_response, src_node_id, dst_node_id, src_pinned_node, dst_pinned_node):
     paths = set()
     for result in trapi_response["message"]["results"]:
         nodes = []
@@ -37,7 +40,50 @@ def get_paths(trapi_response, src_node_id, dst_node_id, src_pinned_node, dst_pin
 
         paths.add(Path(0, nodes))
 
-    return paths
+    return list(paths)
+
+def get_2_hops_paths(trapi_response, src_node_id, dst_node_id, src_pinned_node, dst_pinned_node):
+    paths = set()
+    for result in trapi_response["message"]["results"]:
+        nodes = []
+        node_bindings = result["node_bindings"]
+
+        n1_id = node_bindings[src_pinned_node][0]['id']
+        n1_info = trapi_response['message']['knowledge_graph']['nodes'][n1_id]
+        nodes.append(Node(n1_id, weight=0.5, name=n1_info['name'], degree=10, category=n1_info['categories'][0]))
+
+        inter0_id = node_bindings["intermediate_0"][0]['id']
+        if inter0_id == dst_node_id or inter0_id == src_node_id:
+            continue
+        inter0_info = trapi_response['message']['knowledge_graph']['nodes'][inter0_id]
+        nodes.append(
+            Node(inter0_id, weight=0.5, name=inter0_info['name'], degree=10, category=inter0_info['categories'][0]))
+
+        n2_id = node_bindings[dst_pinned_node][0]['id']
+        n2_info = trapi_response['message']['knowledge_graph']['nodes'][n2_id]
+        nodes.append(Node(n2_id, weight=0.5, name=n2_info['name'], degree=10, category=n2_info['categories'][0]))
+
+        paths.add(Path(0, nodes))
+
+    return list(paths)
+
+def get_1_hop_path(trapi_response, src_node_id, dst_node_id, src_pinned_node, dst_pinned_node):
+    paths = set()
+    for result in trapi_response["message"]["results"]:
+        nodes = []
+        node_bindings = result["node_bindings"]
+
+        n1_id = node_bindings[src_pinned_node][0]['id']
+        n1_info = trapi_response['message']['knowledge_graph']['nodes'][n1_id]
+        nodes.append(Node(n1_id, weight=0.5, name=n1_info['name'], degree=10, category=n1_info['categories'][0]))
+
+        n2_id = node_bindings[dst_pinned_node][0]['id']
+        n2_info = trapi_response['message']['knowledge_graph']['nodes'][n2_id]
+        nodes.append(Node(n2_id, weight=0.5, name=n2_info['name'], degree=10, category=n2_info['categories'][0]))
+
+        paths.add(Path(0, nodes))
+
+    return list(paths)
 
 
 class ThreeHopsPathfinder:
@@ -94,11 +140,38 @@ class ThreeHopsPathfinder:
             gandalf_path=self.repo_uri.removeprefix("gandalf:"),
             degree_repo=get_degree_repo(self.degree_url)
         )
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_3_hops = executor.submit(
+                gandalf_repo.get_3_hops_paths,
+                node_id_1, node_id_2, src_pinned_node, dst_pinned_node, min_information_content
+            )
 
-        trapi_response = gandalf_repo.get_3_hops_paths(node_id_1, node_id_2, src_pinned_node, dst_pinned_node, min_information_content)
-        paths = get_paths(trapi_response, node_id_1, node_id_2, src_pinned_node, dst_pinned_node)
+            future_2_hops = executor.submit(
+                gandalf_repo.get_2_hops_paths,
+                node_id_1, node_id_2, src_pinned_node, dst_pinned_node, min_information_content
+            )
 
-        edge_extractor = EdgeExtractorFromTRAPIResponse(trapi_response, self.logger)
+            future_1_hops = executor.submit(
+                gandalf_repo.get_1_hop_path,
+                node_id_1, node_id_2, src_pinned_node, dst_pinned_node, min_information_content
+            )
+
+            response_3 = future_3_hops.result()
+            response_2 = future_2_hops.result()
+            response_1 = future_1_hops.result()
+
+        paths = get_3_hops_paths(response_3, node_id_1, node_id_2, src_pinned_node, dst_pinned_node)
+        paths.extend(get_2_hops_paths(response_2, node_id_1, node_id_2, src_pinned_node, dst_pinned_node))
+        paths.extend(get_1_hop_path(response_1, node_id_1, node_id_2, src_pinned_node, dst_pinned_node))
+
+        knowledge_graph = deepcopy(response_3["message"]["knowledge_graph"])
+        knowledge_graph["nodes"].update(response_2["message"]["knowledge_graph"]["nodes"])
+        knowledge_graph["nodes"].update(response_1["message"]["knowledge_graph"]["nodes"])
+        knowledge_graph["edges"].update(response_2["message"]["knowledge_graph"]["edges"])
+        knowledge_graph["edges"].update(response_1["message"]["knowledge_graph"]["edges"])
+
+
+        edge_extractor = EdgeExtractorFromTRAPIResponse(knowledge_graph, self.logger)
 
         result, aux_graphs, knowledge_graph = ResultPerPathConverter(
             list(paths),
