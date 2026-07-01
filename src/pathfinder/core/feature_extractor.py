@@ -3,7 +3,7 @@ import numpy as np
 
 def get_neighbors_info(curie, ngd_repo, repo, degree_repo):
     curie_ngd_list = ngd_repo.get_curie_ngd(curie)
-    curie_category, neighbors, edges = repo.get_neighbors_with_edges(curie)
+    curie_name, curie_category, neighbors, edges = repo.get_neighbors_with_edges(curie)
     if neighbors:
         neighbors_id = [curie for curie, _ in neighbors.items()]
         degrees_by_node = degree_repo.get_degrees_by_node(neighbors_id)
@@ -27,8 +27,8 @@ def get_neighbors_info(curie, ngd_repo, repo, degree_repo):
                     else:
                         content_by_curie[node]['edges'][category] = content_by_curie[node]['edges'][category] + 1
 
-        return content_by_curie, curie_category
-    return None, None
+        return content_by_curie, curie_name, curie_category
+    return None, None, None
 
 
 def get_np_array_features(
@@ -51,19 +51,32 @@ def get_np_array_features(
                 for ancestor in ancestors_by_indices[edge_cat_idx]:
                     edge_categories[ancestor] = 1
 
+    node_degrees_feature = get_node_degree_feature(degree_category_to_idx, value['degree_by_category'])
+
+    return ngd_val, pmid_val, cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature
+
+
+def get_node_degree_feature(degree_category_to_idx, degree_by_category):
     node_degrees_feature = np.zeros(len(degree_category_to_idx), dtype=float)
-    for category, count in value['degree_by_category'].items():
+    for category, count in degree_by_category.items():
         if category in degree_category_to_idx:
             category_index = degree_category_to_idx[category]
             node_degrees_feature[category_index] = count
 
-    return np.concatenate([[ngd_val, pmid_val], cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature])
+    return node_degrees_feature
+
+
+def get_concatenate_features(
+        ngd_val, pmid_val, cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature
+):
+    return np.concatenate(
+        [[ngd_val, pmid_val], cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature])
+
 
 def get_edge_categories_start_end_index(curie_category_length, edge_category_length):
-    start = curie_category_length + 2 # 2 for ngd_value and pmid_value
+    start = curie_category_length + 2  # 2 for ngd_value and pmid_value
     end = start + edge_category_length
     return start, end
-
 
 
 def get_category(cat_str, category_to_idx):

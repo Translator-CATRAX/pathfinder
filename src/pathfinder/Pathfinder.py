@@ -71,11 +71,14 @@ class Pathfinder:
     def filter_with_constraint(self, paths, category_constraints):
         result = []
         for path in paths:
-            path_length = len(path.links)
-            if path_length > 2:
-                for i in range(1, path_length - 1):
-                    node = path.links[i]
-                    if node.category in category_constraints:
+            if len(path.edges) > 1:
+                for i in range(1, len(path.edges) - 1):
+                    src_node = path.edges[i].source
+                    trg_node = path.edges[i].target
+                    if src_node.category in category_constraints:
+                        result.append(path)
+                        break
+                    if trg_node.category in category_constraints:
                         result.append(path)
                         break
         return result
@@ -84,17 +87,22 @@ class Pathfinder:
         result = []
         for path in paths:
             append = True
-            path_length = len(path.links)
-            if path_length > hops_numbers + 1:
+            path_length = len(path.edges)
+            if path_length > hops_numbers:
                 continue
-            if path_length > 2:
-                for i in range(1, path_length - 1):
-                    node = path.links[i]
-                    if node.id in self.blocked_curies:
+            if len(path.edges) > 1:
+                for i in range(1, len(path.edges) - 1):
+                    src_node = path.edges[i].source
+                    trg_node = path.edges[i].target
+                    if src_node.id in self.blocked_curies or trg_node.id in self.blocked_curies:
                         append = False
                         break
-                    if node.name is not None:
-                        if node.name.lower() in self.blocked_synonyms:
+                    if src_node.name is not None:
+                        if src_node.name.lower() in self.blocked_synonyms:
+                            append = False
+                            break
+                    if trg_node.name is not None:
+                        if trg_node.name.lower() in self.blocked_synonyms:
                             append = False
                             break
             if append:
@@ -116,7 +124,7 @@ class Pathfinder:
             src_pinned_node: str,
             dst_pinned_node: str,
             limit: int = 500,
-            degree_threshold: int = 30000,
+            degree_threshold: int = 5000,
             category_constraints: Set[str] = None,
             min_information_content: int = 69
     ):
@@ -132,7 +140,7 @@ class Pathfinder:
             limit,
             self.logger
         )
-        paths =  pathfinder.find_three_hops_paths(
+        paths = pathfinder.find_three_hops_paths(
             src_node_id,
             dst_node_id,
             src_pinned_node,
@@ -161,7 +169,7 @@ class Pathfinder:
             hops_numbers,
             limit,
             category_constraints
-        ):
+    ):
         paths = self.remove_block_list(paths, hops_numbers)
 
         if len(category_constraints) > 0:

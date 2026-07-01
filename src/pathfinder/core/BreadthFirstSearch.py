@@ -10,17 +10,17 @@ def process_path(path, repo, prune_top_k, degree_threshold):
     try:
         result = []
         if path.path_limit > 0:
-            last_link = path.last()
-            node_degree = repo.get_node_degree(last_link.id)
-            if node_degree > degree_threshold:
-                return path, result, None
-            neighbors = repo.get_neighbors(last_link, prune_top_k)
-            for idx, neighbor in enumerate(neighbors):
-                if neighbor not in path.links:
+            last_curie = path.last_curie()
+            # node_degree = repo.get_node_degree(last_curie)
+            # if node_degree > degree_threshold:
+            #     return path, result, None
+            edges = repo.get_edges(last_curie)
+            for idx, edge in enumerate(edges):
+                if edge.target not in path.node_set():
                     if idx < prune_top_k:
-                        new_path = path.make_new_path(neighbor)
+                        new_path = path.make_new_path(edge)
                     else:
-                        new_path = path.make_new_path(neighbor, 0)
+                        new_path = path.make_new_path(edge, 0)
                     result.append(new_path)
 
         return path, result, None

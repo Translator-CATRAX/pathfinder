@@ -7,6 +7,7 @@ import numpy as np
 from pathfinder.core.feature_extractor import get_category
 from pathfinder.core.feature_extractor import get_neighbors_info
 from pathfinder.core.feature_extractor import get_np_array_features
+from pathfinder.core.feature_extractor import get_concatenate_features
 from pathfinder.core.repo.NGDRepository import NGDRepository
 from pathfinder.core.repo.NodeDegreeRepo import NodeDegreeRepo
 from pathfinder.core.repo.GandalfRepo import GandalfRepo
@@ -42,7 +43,7 @@ class DataCollector:
                 status=f"neighbors length: loading"
             )
             try:
-                content_by_curie, curie_category = get_neighbors_info(
+                content_by_curie, curie_name, curie_category = get_neighbors_info(
                     key_nodes_pair[0],
                     self.ngd_repo,
                     self.repo,
@@ -73,14 +74,17 @@ class DataCollector:
                     y.append(0)
 
                 curies.append(key)
+                ngd_val, pmid_val, cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature = get_np_array_features(
+                    value,
+                    feature_structure.category_to_idx,
+                    feature_structure.edge_category_to_idx,
+                    curie_category_onehot,
+                    feature_structure.ancestors_by_indices,
+                    feature_structure.degree_category_to_idx
+                )
                 x_list.append(
-                    get_np_array_features(
-                        value,
-                        feature_structure.category_to_idx,
-                        feature_structure.edge_category_to_idx,
-                        curie_category_onehot,
-                        feature_structure.ancestors_by_indices,
-                        feature_structure.degree_category_to_idx
+                    get_concatenate_features(
+                        ngd_val, pmid_val, cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature
                     )
                 )
             pbar.update(1)
@@ -99,8 +103,6 @@ class DataCollector:
             pickle.dump(curie, f)
         with open(f"{self.output_directory}/curies.pkl", "wb") as f:
             pickle.dump(curies, f)
-
-
 
     @staticmethod
     def partial_save(n, group, curie, curies, y, x_list):
@@ -142,5 +144,3 @@ class DataCollector:
         else:
             logging.info(f"No partial data found")
             return 0, [], [], [], [], []
-
-

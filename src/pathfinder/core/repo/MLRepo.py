@@ -1,18 +1,20 @@
+from __future__ import annotations
 import pickle
 import numpy as np
 import xgboost as xgb
 from importlib.resources import files as resource_files
 
-from pathfinder.core.feature_extractor import get_neighbors_info, get_category, get_np_array_features
+from pathfinder.core.feature_extractor import get_neighbors_info, get_category, get_np_array_features, \
+    get_concatenate_features, get_node_degree_feature
 from pathfinder.core.model.Node import Node
-from pathfinder.core.repo.Repository import Repository
+from pathfinder.core.model.Edge import Edge
 
 
 def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
 
 
-class MLRepo(Repository):
+class MLRepo:
 
     def __init__(self, repo, degree_repo, ngd_repo):
         self.repo = repo
@@ -26,7 +28,7 @@ class MLRepo(Repository):
         self.node_degree_category_to_idx = None
         self.load_data()
 
-    def load_data(self):
+    def load_data(self) -> None:
         pkg_files = resource_files('pathfinder.resources')
         with pkg_files.joinpath('node_degree_category_by_indices.pkl').open('rb') as f:
             self.node_degree_category_to_idx = pickle.load(f)
@@ -44,12 +46,9 @@ class MLRepo(Repository):
         self.bst_loaded = xgb.Booster()
         self.bst_loaded.load_model(str(pkg_files.joinpath('pathfinder_xgboost_model_kg_20260408')))
 
-    def get_neighbors(self, node, limit=-1):
-        if limit <= 0:
-            raise Exception(f"The limit:{limit} could not be negative or zero.")
-
-        content_by_curie, curie_category = get_neighbors_info(
-            node.id,
+    def get_edges(self, curie) -> list[Edge]:
+        content_by_curie, curie_name, curie_category = get_neighbors_info(
+            curie,
             self.ngd_repo,
             self.repo,
             self.degree_repo
@@ -57,33 +56,60 @@ class MLRepo(Repository):
 
         if content_by_curie is None:
             return []
-        curie_category_onehot = get_category(curie_category.split(":")[-1], self.category_to_idx)
+        curie_category = curie_category.split(":")[-1] # removing the biolink: prefix
+        curie_category_onehot = get_category(curie_category, self.category_to_idx)
+        number_of_curie_pmid = None
+        curie_pmid_dict = self.ngd_repo.get_curies_pmid_length([curie])
+        if curie_pmid_dict:
+            number_of_curie_pmid = curie_pmid_dict[0][1]
+
+        degree_by_category_of_curie = self.degree_repo.get_degrees_by_node([curie])[curie]
+        curie_degree_feature_array = get_node_degree_feature(
+            self.node_degree_category_to_idx,
+            degree_by_category_of_curie
+        )
 
         feature_list = []
-        curie_list = []
-        curie_degree = []
-        curie_name = []
-        curie_category = []
+        inverse_feature_list = []
+        neighbors_list = []
+        neighbors_degree = []
+        neighbors_name = []
+        neighbors_category = []
         for key, value in content_by_curie.items():
-            curie_list.append(key)
-            curie_degree.append(value.get('degree_by_category', {}).get('biolink:NamedThing', 0))
-            curie_name.append(value.get('name', ''))
-            curie_category.append(value.get('category', ''))
+            neighbors_list.append(key)
+            neighbors_degree.append(value.get('degree_by_category', {}).get('biolink:NamedThing', 0))
+            neighbors_name.append(value.get('name', ''))
+            neighbors_category.append(value.get('category', ''))
+            ngd_val, pmid_val, cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature = get_np_array_features(
+                value,
+                self.category_to_idx,
+                self.edge_category_to_idx,
+                curie_category_onehot,
+                self.ancestors_by_id,
+                self.node_degree_category_to_idx
+            )
             feature_list.append(
-                get_np_array_features(
-                    value,
-                    self.category_to_idx,
-                    self.edge_category_to_idx,
+                get_concatenate_features(
+                    ngd_val, pmid_val, cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature
+                )
+            )
+            inverse_feature_list.append(
+                get_concatenate_features(
+                    value.get('ngd'),
+                    number_of_curie_pmid,
                     curie_category_onehot,
-                    self.ancestors_by_id,
-                    self.node_degree_category_to_idx
+                    edge_categories,
+                    cat_onehot,
+                    curie_degree_feature_array
                 )
             )
 
-        feature_np = np.empty((len(feature_list), len(feature_list[0])), dtype=float)
+        feature_np = np.empty((len(feature_list) + len(inverse_feature_list), len(feature_list[0])), dtype=float)
 
         for i in range(len(feature_list)):
             feature_np[i] = feature_list[i]
+        for i in range(len(inverse_feature_list)):
+            feature_np[i + len(feature_list)] = inverse_feature_list[i]
 
         dtest = xgb.DMatrix(feature_np)
 
@@ -91,19 +117,30 @@ class MLRepo(Repository):
 
         probabilities = sigmoid(scores)
 
-        ranked_items = sorted(
-            zip(curie_list, probabilities, curie_degree, curie_category, curie_name),
-            key=lambda x: x[1],
+        sorted_edge_list = sorted(
+            zip(neighbors_list, neighbors_name, neighbors_degree, neighbors_category,
+                probabilities[0:len(feature_list)], probabilities[len(feature_list):]),
+            key=lambda x: (x[4] + x[5]) / 2,
             reverse=True
         )
-
-        return [Node(
-            id=item[0],
-            weight=float(item[1]),
-            degree=item[2],
-            category=item[3],
-            name=item[4]
-        ) for item in ranked_items]
+        curie_node = Node(
+            curie=curie,
+            name=curie_name,
+            degree=degree_by_category_of_curie['biolink:NamedThing'],
+            category=curie_category
+        )
+        return [
+            Edge(
+                curie_node,
+                Node(
+                    curie=edge[0],
+                    name=edge[1],
+                    degree=edge[2],
+                    category=edge[3]
+                ),
+                float(edge[4]),
+                float(edge[5])
+            ) for edge in sorted_edge_list]
 
     def get_node_degree(self, node_id):
         return self.degree_repo.get_node_degree(node_id)

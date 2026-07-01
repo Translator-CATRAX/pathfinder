@@ -1,8 +1,8 @@
 import gc
 
-from pathfinder.core.repo.Repository import Repository
 from gandalf import CSRGraph, lookup
 from bmt import Toolkit
+
 
 class GandalfRepo:
 
@@ -52,14 +52,16 @@ class GandalfRepo:
                 continue
             nodes[neighbor_id] = {}
             nodes[neighbor_id]['name'] = response['message']['knowledge_graph']['nodes'][neighbor_id]['name']
-            nodes[neighbor_id]['category'] = response['message']['knowledge_graph']['nodes'][neighbor_id]['categories'][0]
+            nodes[neighbor_id]['category'] = response['message']['knowledge_graph']['nodes'][neighbor_id]['categories'][
+                0]
             if neighbor_id not in edges:
                 edges[neighbor_id] = [info['predicate']]
             else:
                 edges[neighbor_id].append(info['predicate'])
         if curie in response['message']['knowledge_graph']['nodes']:
-            return response['message']['knowledge_graph']['nodes'][curie]['categories'][0], nodes, edges
-        return None, None, None
+            return response['message']['knowledge_graph']['nodes'][curie]['name'], \
+            response['message']['knowledge_graph']['nodes'][curie]['categories'][0], nodes, edges
+        return None, None, None, None
 
     def get_3_hops_paths(self, src, dst, src_pinned_node, dst_pinned_node, min_information_content):
         response = lookup(
@@ -171,7 +173,8 @@ class GandalfRepo:
             },
             self.bmt,
             subclass=False,
-            filter_config={"max_node_degree": self.node_degree_threshold, "min_information_content": min_information_content},
+            filter_config={"max_node_degree": self.node_degree_threshold,
+                           "min_information_content": min_information_content},
             dehydrated=True,
         )
         return response
@@ -204,7 +207,8 @@ class GandalfRepo:
             },
             self.bmt,
             subclass=False,
-            filter_config={"max_node_degree": self.node_degree_threshold, "min_information_content": min_information_content},
+            filter_config={"max_node_degree": self.node_degree_threshold,
+                           "min_information_content": min_information_content},
             dehydrated=True,
         )
         return response
@@ -236,4 +240,3 @@ class GandalfRepo:
 
     def get_node_degree(self, node_id):
         return self.degree_repo.get_node_degree(node_id)
-

@@ -18,27 +18,27 @@ def get_3_hops_paths(trapi_response, src_node_id, dst_node_id, src_pinned_node, 
 
         n1_id = node_bindings[src_pinned_node][0]['id']
         n1_info = trapi_response['message']['knowledge_graph']['nodes'][n1_id]
-        nodes.append(Node(n1_id, weight=0.5, name=n1_info['name'], degree=10, category=n1_info['categories'][0]))
+        nodes.append(Node(n1_id, name=n1_info['name'], degree=10, category=n1_info['categories'][0]))
 
         inter0_id = node_bindings["intermediate_0"][0]['id']
         if inter0_id == dst_node_id or inter0_id == src_node_id:
             continue
         inter0_info = trapi_response['message']['knowledge_graph']['nodes'][inter0_id]
         nodes.append(
-            Node(inter0_id, weight=0.5, name=inter0_info['name'], degree=10, category=inter0_info['categories'][0]))
+            Node(inter0_id, name=inter0_info['name'], degree=10, category=inter0_info['categories'][0]))
 
         inter1_id = node_bindings["intermediate_1"][0]['id']
-        if inter1_id == dst_node_id or inter1_id == src_node_id:
+        if inter1_id == dst_node_id or inter1_id == src_node_id or inter1_id == inter0_id:
             continue
         inter1_info = trapi_response['message']['knowledge_graph']['nodes'][inter1_id]
         nodes.append(
-            Node(inter1_id, weight=0.5, name=inter1_info['name'], degree=10, category=inter1_info['categories'][0]))
+            Node(inter1_id, name=inter1_info['name'], degree=10, category=inter1_info['categories'][0]))
 
         n2_id = node_bindings[dst_pinned_node][0]['id']
         n2_info = trapi_response['message']['knowledge_graph']['nodes'][n2_id]
-        nodes.append(Node(n2_id, weight=0.5, name=n2_info['name'], degree=10, category=n2_info['categories'][0]))
+        nodes.append(Node(n2_id, name=n2_info['name'], degree=10, category=n2_info['categories'][0]))
 
-        paths.add(Path(0, nodes))
+        paths.add(Path.from_nodes(0, nodes))
 
     return list(paths)
 
@@ -50,20 +50,20 @@ def get_2_hops_paths(trapi_response, src_node_id, dst_node_id, src_pinned_node, 
 
         n1_id = node_bindings[src_pinned_node][0]['id']
         n1_info = trapi_response['message']['knowledge_graph']['nodes'][n1_id]
-        nodes.append(Node(n1_id, weight=0.5, name=n1_info['name'], degree=10, category=n1_info['categories'][0]))
+        nodes.append(Node(n1_id, name=n1_info['name'], degree=10, category=n1_info['categories'][0]))
 
         inter0_id = node_bindings["intermediate_0"][0]['id']
         if inter0_id == dst_node_id or inter0_id == src_node_id:
             continue
         inter0_info = trapi_response['message']['knowledge_graph']['nodes'][inter0_id]
         nodes.append(
-            Node(inter0_id, weight=0.5, name=inter0_info['name'], degree=10, category=inter0_info['categories'][0]))
+            Node(inter0_id, name=inter0_info['name'], degree=10, category=inter0_info['categories'][0]))
 
         n2_id = node_bindings[dst_pinned_node][0]['id']
         n2_info = trapi_response['message']['knowledge_graph']['nodes'][n2_id]
-        nodes.append(Node(n2_id, weight=0.5, name=n2_info['name'], degree=10, category=n2_info['categories'][0]))
+        nodes.append(Node(n2_id, name=n2_info['name'], degree=10, category=n2_info['categories'][0]))
 
-        paths.add(Path(0, nodes))
+        paths.add(Path.from_nodes(0, nodes))
 
     return list(paths)
 
@@ -75,13 +75,13 @@ def get_1_hop_path(trapi_response, src_node_id, dst_node_id, src_pinned_node, ds
 
         n1_id = node_bindings[src_pinned_node][0]['id']
         n1_info = trapi_response['message']['knowledge_graph']['nodes'][n1_id]
-        nodes.append(Node(n1_id, weight=0.5, name=n1_info['name'], degree=10, category=n1_info['categories'][0]))
+        nodes.append(Node(n1_id, name=n1_info['name'], degree=10, category=n1_info['categories'][0]))
 
         n2_id = node_bindings[dst_pinned_node][0]['id']
         n2_info = trapi_response['message']['knowledge_graph']['nodes'][n2_id]
-        nodes.append(Node(n2_id, weight=0.5, name=n2_info['name'], degree=10, category=n2_info['categories'][0]))
+        nodes.append(Node(n2_id, name=n2_info['name'], degree=10, category=n2_info['categories'][0]))
 
-        paths.add(Path(0, nodes))
+        paths.add(Path.from_nodes(0, nodes))
 
     return list(paths)
 

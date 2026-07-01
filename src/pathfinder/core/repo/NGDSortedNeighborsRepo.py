@@ -1,8 +1,7 @@
 from pathfinder.core.model.Node import Node
-from pathfinder.core.repo.Repository import Repository
 
 
-class NGDSortedNeighborsRepo(Repository):
+class NGDSortedNeighborsRepo:
 
     def __init__(self, repo, degree_repo, ngd_repo):
         self.repo = repo

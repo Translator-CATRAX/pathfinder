@@ -11,9 +11,9 @@ from DrugDiseaseMatchedDB import DrugDiseaseMatchedDB
 def extract_intermediate_nodes(paths):
     nodes = set()
     for path in paths:
-        for i in range(0, len(path.links)):
-            if i != 0 and (i != len(path.links) - 1):
-                nodes.add(str(path.links[i]))
+        for i in range(1, len(path.edges) - 1):
+            nodes.add(str(path.edges[i].source))
+            nodes.add(str(path.edges[i].target))
     return nodes
 
 

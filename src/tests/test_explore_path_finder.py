@@ -3,12 +3,35 @@ import logging
 import time
 from pathlib import Path
 
+import requests
 from pathfinder.Pathfinder import Pathfinder
 
 HERE = Path(__file__).parent
 
+def download_file(url: str, out_path: Path, overwrite: bool = False) -> Path:
+    out_path = Path(out_path)
+
+    if out_path.exists() and not overwrite:
+        return out_path
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    r = requests.get(url, timeout=60)
+    r.raise_for_status()
+
+    out_path.write_bytes(r.content)
+    return out_path
+
+def get_blocked_list():
+    download_file("https://raw.githubusercontent.com/RTXteam/RTX/master/code/ARAX/KnowledgeSources/general_concepts.json", "general_concepts.json", False)
+
+    with open("general_concepts.json", "r") as file:
+        json_block_list = json.load(file)
+    synonyms = set(s.lower() for s in json_block_list["synonyms"])
+    return set(json_block_list["curies"]), synonyms
 
 def test_pathfinder():
+    blocked_curies, blocked_synonyms = get_blocked_list()
     src_node_id = "CHEBI:45783"
     dst_node_id = "MONDO:0004979"
     src_pinned_node = "n1"
@@ -56,12 +79,12 @@ def test_pathfinder():
         f"gandalf:{HERE / '../../gandalf_mmap'}",
         f"sqlite:{ngd_path}",
         f"sqlite:{kg2c_path}",
-        {},
-        {},
+        blocked_curies,
+        blocked_synonyms,
         logger
     )
     start_time = time.perf_counter()
-    result, aux_graphs, knowledge_graph = pathfinder.get_paths(
+    result, aux_graphs, knowledge_graph = pathfinder.get_all_paths(
         src_node_id,
         dst_node_id,
         src_pinned_node,

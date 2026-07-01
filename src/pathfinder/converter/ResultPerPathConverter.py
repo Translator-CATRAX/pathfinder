@@ -68,24 +68,17 @@ class ResultPerPathConverter:
         return result, aux_graphs, knowledge_graph
 
     def extract_edges(self, logger):
-        pairs = set()
+        edges = set()
         for path in self.paths:
-            n1 = path.links[0]
-            for i in range(1, len(path.links)):
-                n2 = path.links[i]
-                if f"{n2.id}--{n1.id}" not in pairs:
-                    pairs.add(f"{n1.id}--{n2.id}")
-                n1 = n2
-            if len(pairs) > 200:
+            edges.update(path.edges)
+            if len(edges) > 200:
                 pair_list = []
-                for pair in pairs:
-                    s = pair.split("--")
-                    pair_list.append([s[0], s[1]])
+                for edge in edges:
+                    pair_list.append([edge.source.id, edge.target.id])
                 self.edge_extractor.get_edges(pair_list, logger)
-                pairs = set()
-        if len(pairs) > 0:
+                edges = set()
+        if len(edges) > 0:
             pair_list = []
-            for pair in pairs:
-                s = pair.split("--")
-                pair_list.append([s[0], s[1]])
+            for edge in edges:
+                pair_list.append([edge.source.id, edge.target.id])
             self.edge_extractor.get_edges(pair_list, logger)

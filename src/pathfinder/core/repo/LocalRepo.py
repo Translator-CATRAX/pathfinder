@@ -40,4 +40,4 @@ class LocalRepo:
             if neighbor not in edges:
                 edges[neighbor] = []
             edges[neighbor].extend(info["predicates"])
-        return self.nodes[curie]["categories"][0], self.nodes[curie]["neighbors"], edges
+        return self.nodes[curie]["name"], self.nodes[curie]["categories"][0], self.nodes[curie]["neighbors"], edges

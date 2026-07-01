@@ -1,33 +1,74 @@
+from __future__ import annotations
+
+import copy
 import math
 import pickle
 import statistics
 
 from pathfinder.core.model.Node import Node
+from pathfinder.core.model.Edge import Edge
 
 
 class Path:
 
-    def __init__(self, path_limit, links=None):
-        if links is None:
-            links = list()
+    def __init__(self, path_limit: int, edges: list[Edge] | None = None, node: Node = None) -> None:
         self.path_limit = path_limit
-        self.links = links
+        self.edges = edges if edges is not None else []
+        self.node = node
 
-    def __eq__(self, other):
+    def __copy__(self):
+        cls = self.__class__
+        new_path = cls.__new__(cls)
+
+        new_path.path_limit = self.path_limit
+        new_path.edges = copy.copy(self.edges)
+        new_path.node = copy.copy(self.node)
+
+        return new_path
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        new_path = cls.__new__(cls)
+
+        memo[id(self)] = new_path
+
+        new_path.path_limit = self.path_limit
+        new_path.edges = copy.deepcopy(self.edges, memo)
+        new_path.node = copy.deepcopy(self.node, memo)
+
+        return new_path
+
+    @classmethod
+    def from_nodes(cls, path_limit: int, nodes: list[Node]) -> Path:
+        edges = []
+        if len(nodes) < 2:
+            raise Exception("Path must have at least 2 nodes.")
+        for i in range(0, len(nodes) - 1):
+            edges.append(Edge(nodes[i], nodes[i + 1], None, None))
+        return cls(path_limit, edges=edges)
+
+    @classmethod
+    def from_curie(cls, path_limit: int, node: Node) -> Path:
+        return cls(path_limit, edges=[], node=node)
+
+    def __eq__(self, other: Path) -> bool:
         if isinstance(other, Path):
             return str(self) == str(other)
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = ""
-        for link in self.links:
-            result += str(link)
+        for i, edge in enumerate(self.edges):
+            if i == len(self.edges) - 1:
+                result += str(edge)
+            else:
+                result += str(edge) + " | "
         return result
 
-    def calculate_degree_penalty(self, degrees, p):
+    def calculate_degree_penalty(self, degrees, p) -> float:
         if not degrees:
             return 0
         sum_of_powers = sum(d ** p for d in degrees)
@@ -36,68 +77,73 @@ class Path:
 
         return penalty
 
-    def compute_weight(self):
-        if len(self.links) == 2:
+    def compute_weight(self) -> float:
+        if len(self.edges) == 0:
+            return 0
+        if len(self.edges) == 1:
             return 1
         weight_over_degree = []
         weight = []
         degree = []
-        for i, link in enumerate(self.links):
-            if link.weight is None:
+        for i, edge in enumerate(self.edges):
+            edge_weight = edge.compute_weight()
+            if edge_weight is None:
                 return 0
-            if link.degree > 0 and i != 0 and i != len(self.links) - 1:
-                degree.append(link.degree)
-            if link.weight < 1:
-                weight.append(link.weight)
-                if link.degree > 1 and i != 0 and i != len(self.links) - 1:
-                    weight_over_degree.append(link.weight / math.log(link.degree))
+            if edge.target.degree > 0 and i != len(self.edges) - 1:
+                degree.append(edge.target.degree)
+            if edge_weight < 1:
+                weight.append(edge_weight)
+                if edge.target.degree > 1 and i != len(self.edges) - 1:
+                    weight_over_degree.append(edge_weight / math.log(edge.target.degree))
                 else:
-                    weight_over_degree.append(link.weight)
+                    weight_over_degree.append(edge_weight)
 
         w_d_geo_mean = statistics.geometric_mean(weight_over_degree)
         w_geo_mean = statistics.geometric_mean(weight)
 
-        if len(degree) > 0:
-            degree_penalty = self.calculate_degree_penalty(degree, 4)
-            if degree_penalty > 1:
-                w_geo_mean /= math.log(degree_penalty)
+        # if len(degree) > 0:
+        #     degree_penalty = self.calculate_degree_penalty(degree, 4)
+        #     if degree_penalty > 1:
+        #         w_geo_mean /= math.log(degree_penalty)
 
-        return (w_d_geo_mean + w_geo_mean) / 2
+        return w_geo_mean
 
-    def make_new_path(self, last_link, path_limit=None):
-        new_links = [Node(link.id, link.weight, link.name, link.degree, link.category) for link in self.links]
-        new_links.append(last_link)
+    def make_new_path(self, last_edge, path_limit=None) -> Path:
+        new_path = copy.deepcopy(self)
+        new_path.edges.append(last_edge)
+
         if path_limit is not None:
-            limit = path_limit
+            new_path.path_limit = path_limit
         else:
-            limit = self.path_limit - 1
-        return Path(limit, new_links)
+            new_path.path_limit = self.path_limit - 1
 
-    def last(self):
-        if len(self.links) == 0:
+        return new_path
+
+    def last_curie(self) -> str:
+        if len(self.edges) == 0 and self.node is None:
             raise Exception("Path is empty.")
-        return self.links[-1]
+        if len(self.edges) == 0 and self.node:
+            return self.node.id
+        return self.edges[-1].target.id
 
-    def path_src_to_id(self, id):
-        new_links = []
-        for link in self.links:
-            new_links.append(Node(link.id, link.weight, link.name, link.degree, link.category))
-            if link.id == id:
-                break
-        return Path(len(new_links) - 1, new_links)
+    def node_set(self) -> set[Node]:
+        node_set = set()
+        for edge in self.edges:
+            node_set.add(edge.source)
+            node_set.add(edge.target)
+        return node_set
 
-    def path_id_to_dest(self, id):
-        new_links = []
-        for link in reversed(self.links):
-            new_links.append(Node(link.id, link.weight, link.name, link.degree, link.category))
-            if link.id == id:
-                break
-        new_links.reverse()
-        return Path(len(new_links) - 1, new_links)
+    def node_list(self) -> list[Node]:
+        node_list = []
+        for i, edge in enumerate(self.edges):
+            if i == 0:
+                node_list.append(edge.source)
+            node_list.append(edge.target)
+        return node_list
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         return pickle.dumps(self)
 
     @staticmethod
-    def deserialize(data):
+    def deserialize(data) -> Path:
         return pickle.loads(data)
