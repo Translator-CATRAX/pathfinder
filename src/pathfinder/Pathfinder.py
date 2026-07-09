@@ -1,4 +1,5 @@
 from typing import Set
+from importlib.metadata import version, PackageNotFoundError
 from pathfinder.core.BidirectionalPathFinder import BidirectionalPathFinder
 
 from pathfinder.converter.EdgeExtractorFromPloverDB import EdgeExtractorFromPloverDB
@@ -40,6 +41,11 @@ class Pathfinder:
             degree_threshold: int = 30000,
             category_constraints: Set[str] = None
     ):
+        try:
+            pkg_version = version("catrax-pathfinder")
+        except PackageNotFoundError:
+            pkg_version = "unknown (not installed)"
+        self.logger.info(f"Calling get_paths() from catrax-pathfinder version: {pkg_version}")
         if category_constraints is None:
             category_constraints = set()
         path_finder = BidirectionalPathFinder(
@@ -128,6 +134,11 @@ class Pathfinder:
             category_constraints: Set[str] = None,
             min_information_content: int = 69
     ):
+        try:
+            pkg_version = version("catrax-pathfinder")
+        except PackageNotFoundError:
+            pkg_version = "unknown (not installed)"
+        self.logger.info(f"Calling get_paths() from catrax-pathfinder version: {pkg_version}")
 
         if category_constraints is None:
             category_constraints = set()
