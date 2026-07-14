@@ -8,7 +8,14 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+if [ -z "$2" ]; then
+    echo "Usage: $0 <gandalf_version>"
+    echo "Example: $0 0_4_2"
+    exit 1
+fi
+
 RELEASE_DATE="$1"
+GANDALF_VERSION="$2"
 
 # Validate date format: YYYY_MM_DD
 if [[ ! "$RELEASE_DATE" =~ ^[0-9]{4}_[0-9]{2}_[0-9]{2}$ ]]; then
@@ -24,7 +31,7 @@ BASE_URL="https://kgx-storage.ci.transltr.io/releases/translator_kg/${RELEASE_DA
 FILE_NAME="translator_kg.tar.zst"
 DOWNLOAD_URL="${BASE_URL}/${FILE_NAME}"
 
-OUTPUT_FILE="gandalf_mmap_tier0-${DATE_NO_UNDERSCORE}.tar.gz"
+OUTPUT_FILE="gandalf_mmap_tier0-${DATE_NO_UNDERSCORE}-gandalf_csr-${GANDALF_VERSION}.tar.gz"
 REMOTE_SERVER="rtxconfig@arax-databases.rtx.ai"
 REMOTE_DIR="~/tier0-${DATE_NO_UNDERSCORE}"
 
@@ -45,7 +52,7 @@ echo "========================================"
 echo "2. Extracting ${FILE_NAME}"
 echo "========================================"
 # Requires zstd to be installed on your system
-tar -I zstd -xvf "$FILE_NAME"
+tar --zstd -xvf "$FILE_NAME"
 
 echo ""
 echo "========================================"
