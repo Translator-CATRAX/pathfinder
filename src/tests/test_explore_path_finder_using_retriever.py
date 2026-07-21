@@ -3,12 +3,11 @@ import logging
 import time
 from pathlib import Path
 
-import requests
+from tests.test_explore_path_finder_using_retriever import get_blocked_list
 from pathfinder.Pathfinder import Pathfinder
 
-from tests.test_explore_path_finder_using_retriever import get_blocked_list
-
 HERE = Path(__file__).parent
+
 
 def test_pathfinder():
     blocked_curies, blocked_synonyms = get_blocked_list()
@@ -55,7 +54,7 @@ def test_pathfinder():
     ngd_path = HERE / "../../curie_ngd_v1.0_tier0-20260408.sqlite"
     kg2c_path = HERE / "../../tier0-info-for-overlay_v1.0_tier0-20260408.sqlite"
     pathfinder = Pathfinder(
-        f"gandalf:{HERE / '../../gandalf_mmap'}",
+        f"retriever:https://retriever.ci.transltr.io/query",
         f"sqlite:{ngd_path}",
         f"sqlite:{kg2c_path}",
         blocked_curies,
@@ -72,7 +71,7 @@ def test_pathfinder():
         4,
         500,
         75,
-        30000,
+        10000,
         None
     )
     end_time = time.perf_counter()

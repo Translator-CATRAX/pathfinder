@@ -1,9 +1,8 @@
 from typing import Set
 from importlib.metadata import version, PackageNotFoundError
-from pathfinder.core.BidirectionalPathFinder import BidirectionalPathFinder
 
-from pathfinder.converter.EdgeExtractorFromPloverDB import EdgeExtractorFromPloverDB
-from pathfinder.converter.EdgeExtractorFromGandalf import EdgeExtractorFromGandalf
+from pathfinder.converter.EdgeExtractorFromTRAPIResponse import EdgeExtractorFromTRAPIResponse
+from pathfinder.core.BidirectionalPathFinder import BidirectionalPathFinder
 from pathfinder.converter.ResultPerPathConverter import ResultPerPathConverter
 from pathfinder.core.ThreeHopsPathfinder import ThreeHopsPathfinder
 
@@ -12,7 +11,6 @@ class Pathfinder:
 
     def __init__(
             self,
-            repository_name: str,
             repo_uri: str,
             ngd_url: str,
             degree_url: str,
@@ -20,7 +18,6 @@ class Pathfinder:
             blocked_synonyms: Set[str],
             logger
     ):
-        self.repo_name = repository_name
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
@@ -49,7 +46,6 @@ class Pathfinder:
         if category_constraints is None:
             category_constraints = set()
         path_finder = BidirectionalPathFinder(
-            "MLRepo",
             self.repo_uri,
             self.ngd_url,
             self.degree_url,
@@ -57,7 +53,7 @@ class Pathfinder:
             degree_threshold,
             self.logger
         )
-        paths = path_finder.find_all_paths(
+        paths, kg = path_finder.find_all_paths(
             src_node_id,
             dst_node_id,
             hops_numbers=max_hops_to_explore
@@ -71,7 +67,8 @@ class Pathfinder:
             dst_pinned_node,
             hops_numbers,
             limit,
-            category_constraints
+            category_constraints,
+            kg
         )
 
     def filter_with_constraint(self, paths, category_constraints):
@@ -115,14 +112,6 @@ class Pathfinder:
                 result.append(path)
         return result
 
-    def get_edge_extractor(self, repo_uri):
-        if repo_uri.startswith("ploverdb:"):
-            return EdgeExtractorFromPloverDB(repo_uri.removeprefix("ploverdb:"))
-        elif repo_uri.startswith("gandalf:"):
-            return EdgeExtractorFromGandalf(repo_uri.removeprefix("gandalf:"))
-        else:
-            raise ValueError(f"Unknown repo uri Starting with: '{repo_uri}'.")
-
     def get_three_hops_paths(
             self,
             src_node_id: str,
@@ -143,7 +132,6 @@ class Pathfinder:
         if category_constraints is None:
             category_constraints = set()
         pathfinder = ThreeHopsPathfinder(
-            "MLRepo",
             self.repo_uri,
             self.ngd_url,
             self.degree_url,
@@ -151,7 +139,7 @@ class Pathfinder:
             limit,
             self.logger
         )
-        paths = pathfinder.find_three_hops_paths(
+        paths, kg = pathfinder.find_three_hops_paths(
             src_node_id,
             dst_node_id,
             src_pinned_node,
@@ -167,7 +155,8 @@ class Pathfinder:
             dst_pinned_node,
             3,
             limit,
-            category_constraints
+            category_constraints,
+            kg
         )
 
     def post_paths_process(
@@ -179,7 +168,8 @@ class Pathfinder:
             dst_pinned_node,
             hops_numbers,
             limit,
-            category_constraints
+            category_constraints,
+            kg
     ):
         paths = self.remove_block_list(paths, hops_numbers)
 
@@ -188,8 +178,7 @@ class Pathfinder:
 
         paths = paths[:limit]
         self.logger.info(f"PathFinder found {len(paths)} paths")
-
-        edge_extractor = self.get_edge_extractor(self.repo_uri)
+        edge_extractor = EdgeExtractorFromTRAPIResponse(kg, self.logger)
         return ResultPerPathConverter(
             paths,
             src_node_id,

@@ -1,6 +1,6 @@
 # Pathfinder Neighbor-Ranking Model Training (XGBoost)
 
-This script trains an **XGBoost learning-to-rank model** (`rank:pairwise`) to **rank 1-hop neighbors of a CURIE** in a knowledge graph using features collected from a PloverDB-backed KG plus local SQLite resources (node degree, NGD).
+This script trains an **XGBoost learning-to-rank model** (`rank:pairwise`) to **rank 1-hop neighbors of a CURIE** in a knowledge graph using features collected from a Gandalf-backed KG plus local SQLite resources (node degree, NGD).
 
 ---
 
@@ -10,8 +10,7 @@ This script trains an **XGBoost learning-to-rank model** (`rank:pairwise`) to **
 
 ```bash
 nohup env PYTHONPATH=src python build_model/training/training.py \
-  --kg-version "2.10.2" \
-  --plover-url "https://kg2cploverdb.ci.transltr.io" \
+  --kg-version "20260621" \
   > output.log 2>&1 &
 ```
 
@@ -48,11 +47,10 @@ pip install -r requirements.txt
 
 ## Downloaded Databases (SSH required)
 
-Before training, the script downloads 3 SQLite DB files for the given KG version into `--out-dir`:
+Before training, the script downloads SQLite DB files for the given KG version into `--out-dir`:
 
-- Node degree DB: `kg2c_v1.0_KG<kg_version>.sqlite`
-- Node synonymizer DB: `node_synonymizer_v1.0_KG<kg_version>.sqlite`
-- CURIE NGD DB: `curie_ngd_v1.0_KG<kg_version>.sqlite`
+- Node degree DB: `tier0-info-for-overlay_v1.0_tier0-<kg_version>.sqlite`
+- CURIE NGD DB: `curie_ngd_v1.0_tier0-<kg_version>.sqlite`
 
 By default it downloads from:
 
@@ -60,7 +58,7 @@ By default it downloads from:
 - Username: `rtxconfig`
 - Port: `22`
 - Remote paths (pattern):
-  - `~/KG<kg_version>/<dbname>`
+  - `~/tier0-<kg_version>/<dbname>`
 
 ---
 
@@ -68,10 +66,8 @@ By default it downloads from:
 
 ### Required
 - `--kg-version VERSION`  
-  Knowledge graph version, must match `X.Y.Z` (e.g., `2.10.2`)
+  Knowledge graph version (e.g., `20260621`)
 
-- `--plover-url URL`  
-  PloverDB base URL used by the data collector
 
 ### Optional (DB download settings)
 - `--db-host HOST` (default: `arax-databases.rtx.ai`)

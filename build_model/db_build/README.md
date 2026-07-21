@@ -1,6 +1,6 @@
 # curie_ngd_builder
 
-Builds a `curie_ngd` SQLite database for a specified KGX version, using PloverDB or Gandalf instance for KG lookups and Redis as a working cache.
+Builds a `curie_ngd` SQLite database for a specified KGX version, using Gandalf instance for KG lookups and Redis as a working cache.
 
 ---
 

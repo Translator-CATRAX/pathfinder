@@ -3,7 +3,7 @@ import numpy as np
 
 def get_neighbors_info(curie, ngd_repo, repo, degree_repo):
     curie_ngd_list = ngd_repo.get_curie_ngd(curie)
-    curie_name, curie_category, neighbors, edges = repo.get_neighbors_with_edges(curie)
+    curie_name, curie_category, neighbors, edges, knowledge_graph = repo.get_neighbors_with_edges(curie)
     if neighbors:
         neighbors_id = [curie for curie, _ in neighbors.items()]
         degrees_by_node = degree_repo.get_degrees_by_node(neighbors_id)
@@ -27,8 +27,8 @@ def get_neighbors_info(curie, ngd_repo, repo, degree_repo):
                     else:
                         content_by_curie[node]['edges'][category] = content_by_curie[node]['edges'][category] + 1
 
-        return content_by_curie, curie_name, curie_category
-    return None, None, None
+        return content_by_curie, curie_name, curie_category, knowledge_graph
+    return None, None, None, knowledge_graph
 
 
 def get_np_array_features(

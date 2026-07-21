@@ -23,15 +23,14 @@ def run_bfs_process(hops_numbers, node_id, repo_args, prune_top_k, degree_thresh
     path_container.add_new_path(new_path)
 
 
-    traverse(repo, path_queue, path_container, prune_top_k, degree_threshold)
+    knowledge_graph = traverse(repo, path_queue, path_container, prune_top_k)
 
-    return path_container
+    return path_container, knowledge_graph
 
 
 class BidirectionalPathFinder:
 
-    def __init__(self, repository_name, repo_uri, ngd_url, degree_url, prune_top_k, degree_threshold, logger):
-        self.repo_name = repository_name
+    def __init__(self, repo_uri, ngd_url, degree_url, prune_top_k, degree_threshold, logger):
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
@@ -51,23 +50,25 @@ class BidirectionalPathFinder:
         hops_numbers_1 = math.floor((hops_numbers + 1) / 2)
         hops_numbers_2 = math.floor(hops_numbers / 2)
 
-        repo_args = (self.repo_name, self.repo_uri, self.ngd_url, self.degree_url, self.degree_threshold)
+        repo_args = (self.repo_uri, self.ngd_url, self.degree_url, self.degree_threshold)
 
         with ProcessPoolExecutor(max_workers=2) as ex:
             f1 = ex.submit(run_bfs_process, hops_numbers_1, node_id_1, repo_args, self.prune_top_k, self.degree_threshold)
             f2 = ex.submit(run_bfs_process, hops_numbers_2, node_id_2, repo_args, self.prune_top_k, self.degree_threshold)
 
             try:
-                path_container_1 = f1.result()
+                path_container_1, kg_1 = f1.result()
             except Exception as e:
                 self.logger.error(f"Process 1 with curie id: {node_id_1} failed with exception: {e}")
                 path_container_1 = None
 
             try:
-                path_container_2 = f2.result()
+                path_container_2, kg_2 = f2.result()
             except Exception as e:
                 self.logger.error(f"Process 2 with curie id: {node_id_2} failed with exception: {e}")
                 path_container_2 = None
+
+        kg = self.aggregate_kg(kg_1, kg_2)
 
         intersection_list = path_container_1.path_dict.keys() & path_container_2.path_dict.keys()
 
@@ -84,4 +85,23 @@ class BidirectionalPathFinder:
 
         result = sorted(list(result), key=lambda path: path.compute_weight(), reverse=True)
 
-        return result
+        return result, kg
+
+    def aggregate_kg(self, kg_1, kg_2):
+        if kg_1 is None:
+            kg_1 = {"edges": {}, "nodes": {}}
+        if kg_2 is None:
+            kg_2 = {"edges": {}, "nodes": {}}
+
+        if "edges" not in kg_1 and "nodes" not in kg_1:
+            kg_1 = {"edges": {}, "nodes": {}}
+        elif "edges" not in kg_1:
+            kg_1["edges"] = {}
+        elif "nodes" not in kg_1:
+            kg_1["nodes"] = {}
+        if "edges" in kg_2:
+            kg_1["edges"].update(kg_2["edges"])
+        if "nodes" in kg_2:
+            kg_1["nodes"].update(kg_2["nodes"])
+
+        return kg_1

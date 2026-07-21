@@ -7,7 +7,7 @@ from pathfinder.converter.EdgeExtractorFromTRAPIResponse import EdgeExtractorFro
 from pathfinder.core.repo.GandalfRepo import GandalfRepo
 from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Path import Path
-from pathfinder.core.repo.repo_factory import get_repo, get_degree_repo
+from pathfinder.core.repo.repo_factory import get_repo, get_degree_repo, get_kg_repo
 
 
 def get_3_hops_paths(trapi_response, src_node_id, dst_node_id, src_pinned_node, dst_pinned_node):
@@ -88,8 +88,7 @@ def get_1_hop_path(trapi_response, src_node_id, dst_node_id, src_pinned_node, ds
 
 class ThreeHopsPathfinder:
 
-    def __init__(self, repository_name, repo_uri, ngd_url, degree_url, degree_threshold, limit, logger):
-        self.repo_name = repository_name
+    def __init__(self, repo_uri, ngd_url, degree_url, degree_threshold, limit, logger):
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
@@ -135,24 +134,24 @@ class ThreeHopsPathfinder:
             }
         }
 
-        gandalf_repo = GandalfRepo(
-            self.degree_threshold,
-            gandalf_path=self.repo_uri.removeprefix("gandalf:"),
-            degree_repo=get_degree_repo(self.degree_url)
+        repo = get_kg_repo(
+            self.repo_uri,
+            get_degree_repo(self.degree_url),
+            self.degree_threshold
         )
         with ThreadPoolExecutor(max_workers=3) as executor:
             future_3_hops = executor.submit(
-                gandalf_repo.get_3_hops_paths,
+                repo.get_3_hops_paths,
                 node_id_1, node_id_2, src_pinned_node, dst_pinned_node, min_information_content
             )
 
             future_2_hops = executor.submit(
-                gandalf_repo.get_2_hops_paths,
+                repo.get_2_hops_paths,
                 node_id_1, node_id_2, src_pinned_node, dst_pinned_node, min_information_content
             )
 
             future_1_hops = executor.submit(
-                gandalf_repo.get_1_hop_path,
+                repo.get_1_hop_path,
                 node_id_1, node_id_2, src_pinned_node, dst_pinned_node, min_information_content
             )
 
@@ -202,7 +201,6 @@ class ThreeHopsPathfinder:
         pathfinder_request["message"]["results"] = res
 
         path_ranker = PathRanker(
-            "MLRepo",
             self.repo_uri,
             self.ngd_url,
             self.degree_url,

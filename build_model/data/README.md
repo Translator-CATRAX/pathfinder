@@ -51,7 +51,7 @@ DRUGBANK_PASSWORD="yourpassword"
 WORKDIR="$HOME/work/drugbankner_run"
 
 # KG version passed to DrugBankNER scripts
-KG_VERSION="2.10.2"
+KG_VERSION="20260621"
 ```
 
 ### Passwords with special characters (important)

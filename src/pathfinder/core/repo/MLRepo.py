@@ -1,5 +1,7 @@
 from __future__ import annotations
 import pickle
+from typing import Any
+
 import numpy as np
 import xgboost as xgb
 from importlib.resources import files as resource_files
@@ -46,8 +48,8 @@ class MLRepo:
         self.bst_loaded = xgb.Booster()
         self.bst_loaded.load_model(str(pkg_files.joinpath('pathfinder_xgboost_model_kg_20260408')))
 
-    def get_edges(self, curie) -> list[Edge]:
-        content_by_curie, curie_name, curie_category = get_neighbors_info(
+    def get_edges(self, curie) -> tuple[list[Edge], dict[Any, Any]]:
+        content_by_curie, curie_name, curie_category, knowledge_graph = get_neighbors_info(
             curie,
             self.ngd_repo,
             self.repo,
@@ -55,7 +57,7 @@ class MLRepo:
         )
 
         if content_by_curie is None:
-            return []
+            return [], {}
         curie_category = curie_category.split(":")[-1] # removing the biolink: prefix
         curie_category_onehot = get_category(curie_category, self.category_to_idx)
         number_of_curie_pmid = None
@@ -140,7 +142,7 @@ class MLRepo:
                 ),
                 float(edge[4]),
                 float(edge[5])
-            ) for edge in sorted_edge_list]
+            ) for edge in sorted_edge_list], knowledge_graph
 
     def get_node_degree(self, node_id):
         return self.degree_repo.get_node_degree(node_id)

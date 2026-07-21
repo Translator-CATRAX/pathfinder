@@ -3,8 +3,6 @@ import logging
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
-from path_finder_service import get_paths_from_path_finder
 from DrugDiseaseMatchedDB import DrugDiseaseMatchedDB
 
 
@@ -17,7 +15,7 @@ def extract_intermediate_nodes(paths):
     return nodes
 
 
-def run_tests(db, pathfinder_type):
+def run_tests(db):
     with open('./build_model/data/testing.json', 'r') as file:
         data = json.load(file)
 
@@ -32,7 +30,7 @@ def run_tests(db, pathfinder_type):
             if zeros < 0:
                 zeros += 1
                 continue
-            paths = get_paths_from_path_finder(pathfinder_type, source, destination)
+            paths = None # TODO get_paths_from_path_finder(source, destination)
             intermediate_node_from_path_finder = extract_intermediate_nodes(paths)
             matched = intermediate_node_from_path_finder & test_nodes
             containment_index = len(matched) / len(test_nodes)
@@ -82,15 +80,15 @@ def depict_pdf(db, file_name, zero_included = False):
     plt.savefig(f"{file_name}-{zero_inclusion_title}.png")
 
 
-def test(pathfinder_type, file_name):
+def test(file_name):
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    db = DrugDiseaseMatchedDB(f"drug_disease_{pathfinder_type}.db")
+    db = DrugDiseaseMatchedDB(f"drug_disease.db")
     db.create_table()
     number_of_test_data()
-    run_tests(db, pathfinder_type)
+    run_tests(db)
     depict_pdf(db, file_name, False)
     depict_pdf(db, file_name, True)
 
 
 if __name__ == "__main__":
-    test("new", "node_degree")
+    test("node_degree")

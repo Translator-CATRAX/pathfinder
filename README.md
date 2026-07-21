@@ -18,7 +18,7 @@ You will need a compatible curie_ngd and tier0-info-for-overlay SQLite database 
 
 - **Recommended**: Ask a team member for mysql urls to these databases
 - **Alternative**: Ask a team member for local copies of these databases
- 
+
 
 
 ## Quickstart
@@ -26,7 +26,7 @@ You will need a compatible curie_ngd and tier0-info-for-overlay SQLite database 
 ```python
 from pathfinder.Pathfinder import Pathfinder
 
-gandalf_path = "gandalf:./gandalf_mmap"
+repo_uri = "retriever:<retriever_URL>"
 
 ngd_url = "sqlite:curie_ngd_v1.0_tier0-20260408.sqlite"
 degree_url = "sqlite:tier0-info-for-overlay_v1.0_tier0-20260408"
@@ -43,8 +43,7 @@ blocked_synonyms = set([
 logger = None
 
 pathfinder = Pathfinder(
-    repository_name="MLRepo",
-    repo_uri=gandalf_path,
+    repo_uri=repo_uri,
     ngd_url=ngd_url,
     degree_url=degree_url,
     blocked_curies=blocked_curies,
@@ -58,10 +57,10 @@ result, aux_graphs, knowledge_graph = pathfinder.get_paths(
     src_pinned_node="node_1",
     dst_pinned_node="node_2",
     hops_numbers=4,
-    max_hops_to_explore=6,
+    max_hops_to_explore=4,
     limit=500,
-    prune_top_k=30,
-    degree_threshold=30000,
+    prune_top_k=75,
+    degree_threshold=10000,
     category_constraints=[],
 )
 ```
@@ -76,7 +75,6 @@ Constructor:
 
 ```python
 Pathfinder(
-    repository_name: str,
     repo_uri: str,
     ngd_url: str,
     degree_url: str,
@@ -88,7 +86,6 @@ Pathfinder(
 
 #### Parameters
 
-- **repository_name**: For now, this should always be `"MLRepo"`.
 - **repo_uri**: A path to gandalf memory-mapped directory.
 - **ngd_url**: Connection string for the *CURIE-NGD* repository (SQLite or MySQL).
 - **degree_url**: Connection string for the *node degree* repository (SQLite or MySQL).

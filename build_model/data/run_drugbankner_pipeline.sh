@@ -11,7 +11,7 @@ PY_VER="${PY_VER:-3.11.10}"
 # DrugBank credentials (required to programmatically download)
 : "${DRUGBANK_EMAIL:?Set DRUGBANK_EMAIL}"
 : "${DRUGBANK_PASSWORD:?Set DRUGBANK_PASSWORD}"
-: "${KG_VERSION:?Set KG_VERSION (e.g. 2.10.2) in drugbankner.env}"
+: "${KG_VERSION:?Set KG_VERSION (e.g. 20260621) in drugbankner.env}"
 
 # ---- Helpers ----
 need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing required command: $1" >&2; exit 1; }; }

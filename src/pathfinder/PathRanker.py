@@ -12,8 +12,7 @@ from pathfinder.core.repo.repo_factory import get_degree_repo, get_ngd_repo
 
 class PathRanker:
 
-    def __init__(self, repo_name: str, repo_uri: str, ngd_url: str, degree_url: str, max_size: int = 0):
-        self.repo_name = repo_name
+    def __init__(self, repo_uri: str, ngd_url: str, degree_url: str, max_size: int = 0):
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
@@ -25,7 +24,7 @@ class PathRanker:
         nodes = {}
         ml_repo = MLRepo(local_repo, get_degree_repo(self.degree_url), get_ngd_repo(self.ngd_url))
         for curie in pathfinder_response["message"]["knowledge_graph"]["nodes"].keys():
-            edges = ml_repo.get_edges(curie)
+            edges, knowledge_graph = ml_repo.get_edges(curie)
             for edge in edges:
                 if edge.source.id not in nodes:
                     nodes[edge.source.id] = {}
