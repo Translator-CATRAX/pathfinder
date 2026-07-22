@@ -4,7 +4,6 @@ from copy import deepcopy
 from pathfinder.PathRanker import PathRanker
 from pathfinder.converter.ResultPerPathConverter import ResultPerPathConverter
 from pathfinder.converter.EdgeExtractorFromTRAPIResponse import EdgeExtractorFromTRAPIResponse
-from pathfinder.core.repo.GandalfRepo import GandalfRepo
 from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Path import Path
 from pathfinder.core.repo.repo_factory import get_repo, get_degree_repo, get_kg_repo
