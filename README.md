@@ -86,7 +86,7 @@ Pathfinder(
 
 #### Parameters
 
-- **repo_uri**: A path to gandalf memory-mapped directory.
+- **repo_uri**: A URL to Retriever.
 - **ngd_url**: Connection string for the *CURIE-NGD* repository (SQLite or MySQL).
 - **degree_url**: Connection string for the *node degree* repository (SQLite or MySQL).
 - **blocked_curies**: A set of CURIE IDs; any path that passes through these CURIEs is dropped.

@@ -4,7 +4,6 @@ from pathfinder.core.repo.NGDSortedNeighborsRepo import NGDSortedNeighborsRepo
 from pathfinder.core.repo.NodeDegreeRepo import NodeDegreeRepo
 from pathfinder.core.repo.MysqlNGDRepository import MysqlNGDRepository
 from pathfinder.core.repo.MysqlNodeDegreeRepo import MysqlNodeDegreeRepo
-from pathfinder.core.repo.GandalfRepo import GandalfRepo
 from pathfinder.core.repo.RetrieverRepo import RetrieverRepo
 
 
@@ -25,9 +24,7 @@ def get_degree_repo(degree_url):
         raise ValueError(f"Unknown ngd_url '{degree_url}'.")
 
 def get_kg_repo(repo_uri, degree_repo, node_degree_threshold):
-    if repo_uri.startswith("gandalf:"):
-        return GandalfRepo(node_degree_threshold, gandalf_path=repo_uri.removeprefix("gandalf:"), degree_repo=degree_repo)
-    elif repo_uri.startswith("retriever:"):
+    if repo_uri.startswith("retriever:"):
         return RetrieverRepo(node_degree_threshold, retriever_path=repo_uri.removeprefix("retriever:"), degree_repo=degree_repo)
     else:
         raise ValueError(f"Unknown repo uri Starting with: '{repo_uri}'.")
