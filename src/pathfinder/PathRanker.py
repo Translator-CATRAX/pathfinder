@@ -12,8 +12,7 @@ from pathfinder.core.repo.repo_factory import get_degree_repo, get_ngd_repo
 
 class PathRanker:
 
-    def __init__(self, repo_uri: str, ngd_url: str, degree_url: str, max_size: int = 0):
-        self.repo_uri = repo_uri
+    def __init__(self, ngd_url: str, degree_url: str, max_size: int = 0):
         self.ngd_url = ngd_url
         self.degree_url = degree_url
         self.max_size = max_size

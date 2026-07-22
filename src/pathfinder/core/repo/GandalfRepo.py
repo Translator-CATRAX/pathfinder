@@ -60,8 +60,8 @@ class GandalfRepo:
                 edges[neighbor_id].append(info['predicate'])
         if curie in response['message']['knowledge_graph']['nodes']:
             return response['message']['knowledge_graph']['nodes'][curie]['name'], \
-            response['message']['knowledge_graph']['nodes'][curie]['categories'][0], nodes, edges
-        return None, None, None, None
+            response['message']['knowledge_graph']['nodes'][curie]['categories'][0], nodes, edges, response['message']['knowledge_graph']
+        return None, None, None, None, response['message']['knowledge_graph']
 
     def get_3_hops_paths(self, src, dst, src_pinned_node, dst_pinned_node, min_information_content):
         response = lookup(

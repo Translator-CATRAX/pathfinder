@@ -48,8 +48,7 @@ def traverse(repo, path_queue, path_container, prune_top_k):
                     if "edges" in kg:
                         knowledge_graph["edges"].update(kg["edges"])
                 if exception:
-                    # logger.error(f"Path {original_path} raised an exception: {exception}") todo
-                    raise exception
+                    raise RuntimeError(f"Path {original_path} raised an exception: {exception}") from exception
                 else:
                     for new_path in new_paths:
                         path_queue.put(new_path)

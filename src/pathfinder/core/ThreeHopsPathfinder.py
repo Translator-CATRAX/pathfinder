@@ -201,7 +201,6 @@ class ThreeHopsPathfinder:
         pathfinder_request["message"]["results"] = res
 
         path_ranker = PathRanker(
-            self.repo_uri,
             self.ngd_url,
             self.degree_url,
             self.limit
@@ -209,4 +208,4 @@ class ThreeHopsPathfinder:
 
         _, paths = path_ranker.rank_path(pathfinder_request)
 
-        return paths
+        return paths, knowledge_graph

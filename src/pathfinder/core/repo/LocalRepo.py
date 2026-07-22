@@ -5,6 +5,7 @@ class LocalRepo:
 
     def __init__(self, pathfinder_response):
 
+        self.kg = copy.deepcopy(pathfinder_response["message"]["knowledge_graph"])
         self.nodes = copy.deepcopy(pathfinder_response["message"]["knowledge_graph"]["nodes"])
 
         for edge_id, edge_info in pathfinder_response["message"]["knowledge_graph"]["edges"].items():
@@ -40,4 +41,4 @@ class LocalRepo:
             if neighbor not in edges:
                 edges[neighbor] = []
             edges[neighbor].extend(info["predicates"])
-        return self.nodes[curie]["name"], self.nodes[curie]["categories"][0], self.nodes[curie]["neighbors"], edges
+        return self.nodes[curie]["name"], self.nodes[curie]["categories"][0], self.nodes[curie]["neighbors"], edges, self.kg

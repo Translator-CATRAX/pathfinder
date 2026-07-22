@@ -8,10 +8,9 @@ HERE = Path(__file__).parent
 def test_rank_path():
     one_hop_query = json.loads((HERE / "pathfinder-one-hop-response.json").read_text())
 
-    ngd_path = HERE / "../../curie_ngd_v1.0_tier0-20260408.sqlite"
-    kg2c_path = HERE / "../../tier0-info-for-overlay_v1.0_tier0-20260408.sqlite"
+    ngd_path = HERE / "../../curie_ngd_v1.0_tier0-20260621.sqlite"
+    kg2c_path = HERE / "../../tier0-info-for-overlay_v1.0_tier0-20260621.sqlite"
     path_ranker = PathRanker(
-        f"gandalf:{HERE / '../../gandalf_mmap'}",
         f"sqlite:{ngd_path}",
         f"sqlite:{kg2c_path}"
     )

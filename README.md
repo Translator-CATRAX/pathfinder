@@ -28,8 +28,8 @@ from pathfinder.Pathfinder import Pathfinder
 
 repo_uri = "retriever:<retriever_URL>"
 
-ngd_url = "sqlite:curie_ngd_v1.0_tier0-20260408.sqlite"
-degree_url = "sqlite:tier0-info-for-overlay_v1.0_tier0-20260408"
+ngd_url = "sqlite:curie_ngd_v1.0_tier0-20260621.sqlite"
+degree_url = "sqlite:tier0-info-for-overlay_v1.0_tier0-20260621"
 
 # Optional filters
 blocked_curies = set([
