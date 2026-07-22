@@ -60,20 +60,18 @@ class RetrieverRepo:
             return None, None, None, None, response['message']['knowledge_graph']
 
         except requests.exceptions.HTTPError as http_err:
-            print(f"HTTP error occurred: {http_err}")
+            error_msg = f"HTTP error occurred for Curie: {curie}: {http_err}"
             if res.text:
-                print(f"Error details: {res.text}")
-            print(f"Curie: {curie}")
+                error_msg += f" | Error details: {res.text}"
+            raise RuntimeError(error_msg) from http_err
         except requests.exceptions.ConnectionError as conn_err:
-            print(f"Connection error occurred: {conn_err}")
+            raise RuntimeError(f"Connection error occurred: {conn_err}") from conn_err
         except requests.exceptions.Timeout as timeout_err:
-            print(f"Timeout error occurred: {timeout_err}")
+            raise RuntimeError(f"Timeout error occurred: {timeout_err}") from timeout_err
         except requests.exceptions.RequestException as req_err:
-            print(f"An unexpected error occurred: {req_err}")
-        except json.JSONDecodeError:
-            print("Failed to parse the response as JSON.")
-            print(f"Raw response: {res.text}")
-        return None, None, None, None
+            raise RuntimeError(f"An unexpected error occurred: {req_err}") from req_err
+        except json.JSONDecodeError as json_err:
+            raise RuntimeError(f"Failed to parse the response as JSON. Raw response: {res.text}") from json_err
 
     def get_3_hops_paths(self, src, dst, src_pinned_node, dst_pinned_node, min_information_content):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -198,18 +196,18 @@ class RetrieverRepo:
             return res.json()
 
         except requests.exceptions.HTTPError as http_err:
-            print(f"HTTP error occurred: {http_err}")
+            error_msg = f"HTTP error occurred: {http_err}"
             if res.text:
-                print(f"Error details: {res.text}")
+                error_msg += f" | Error details: {res.text}"
+            raise RuntimeError(error_msg) from http_err
         except requests.exceptions.ConnectionError as conn_err:
-            print(f"Connection error occurred: {conn_err}")
+            raise RuntimeError(f"Connection error occurred: {conn_err}") from conn_err
         except requests.exceptions.Timeout as timeout_err:
-            print(f"Timeout error occurred: {timeout_err}")
+            raise RuntimeError(f"Timeout error occurred: {timeout_err}") from timeout_err
         except requests.exceptions.RequestException as req_err:
-            print(f"An unexpected error occurred: {req_err}")
-        except json.JSONDecodeError:
-            print("Failed to parse the response as JSON.")
-            print(f"Raw response: {res.text}")
+            raise RuntimeError(f"An unexpected error occurred: {req_err}") from req_err
+        except json.JSONDecodeError as json_err:
+            raise RuntimeError(f"Failed to parse the response as JSON. Raw response: {res.text}") from json_err
 
     def get_2_hops_paths(self, src, dst, src_pinned_node, dst_pinned_node, min_information_content):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -252,18 +250,18 @@ class RetrieverRepo:
             return res.json()
 
         except requests.exceptions.HTTPError as http_err:
-            print(f"HTTP error occurred: {http_err}")
+            error_msg = f"HTTP error occurred: {http_err}"
             if res.text:
-                print(f"Error details: {res.text}")
+                error_msg += f" | Error details: {res.text}"
+            raise RuntimeError(error_msg) from http_err
         except requests.exceptions.ConnectionError as conn_err:
-            print(f"Connection error occurred: {conn_err}")
+            raise RuntimeError(f"Connection error occurred: {conn_err}") from conn_err
         except requests.exceptions.Timeout as timeout_err:
-            print(f"Timeout error occurred: {timeout_err}")
+            raise RuntimeError(f"Timeout error occurred: {timeout_err}") from timeout_err
         except requests.exceptions.RequestException as req_err:
-            print(f"An unexpected error occurred: {req_err}")
-        except json.JSONDecodeError:
-            print("Failed to parse the response as JSON.")
-            print(f"Raw response: {res.text}")
+            raise RuntimeError(f"An unexpected error occurred: {req_err}") from req_err
+        except json.JSONDecodeError as json_err:
+            raise RuntimeError(f"Failed to parse the response as JSON. Raw response: {res.text}") from json_err
 
     def get_1_hop_path(self, src, dst, src_pinned_node, dst_pinned_node, min_information_content):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -299,18 +297,18 @@ class RetrieverRepo:
             return res.json()
 
         except requests.exceptions.HTTPError as http_err:
-            print(f"HTTP error occurred: {http_err}")
+            error_msg = f"HTTP error occurred: {http_err}"
             if res.text:
-                print(f"Error details: {res.text}")
+                error_msg += f" | Error details: {res.text}"
+            raise RuntimeError(error_msg) from http_err
         except requests.exceptions.ConnectionError as conn_err:
-            print(f"Connection error occurred: {conn_err}")
+            raise RuntimeError(f"Connection error occurred: {conn_err}") from conn_err
         except requests.exceptions.Timeout as timeout_err:
-            print(f"Timeout error occurred: {timeout_err}")
+            raise RuntimeError(f"Timeout error occurred: {timeout_err}") from timeout_err
         except requests.exceptions.RequestException as req_err:
-            print(f"An unexpected error occurred: {req_err}")
-        except json.JSONDecodeError:
-            print("Failed to parse the response as JSON.")
-            print(f"Raw response: {res.text}")
+            raise RuntimeError(f"An unexpected error occurred: {req_err}") from req_err
+        except json.JSONDecodeError as json_err:
+            raise RuntimeError(f"Failed to parse the response as JSON. Raw response: {res.text}") from json_err
 
     def get_node_degree(self, node_id):
         return self.degree_repo.get_node_degree(node_id)
