@@ -1,13 +1,17 @@
 import numpy as np
 
 
-def get_neighbors_info(curie, ngd_repo, repo, degree_repo):
-    curie_ngd_list = ngd_repo.get_curie_ngd(curie)
-    curie_name, curie_category, neighbors, edges, knowledge_graph = repo.get_neighbors_with_edges(curie)
+def get_neighbors_info(curie, ngd_repo, repo, degree_repo, timings):
+    with timings.timed("sqlite_ngd_lookup"):
+        curie_ngd_list = ngd_repo.get_curie_ngd(curie)
+    with timings.timed("retriever_http"):
+        curie_name, curie_category, neighbors, edges, knowledge_graph = repo.get_neighbors_with_edges(curie)
     if neighbors:
         neighbors_id = [curie for curie, _ in neighbors.items()]
-        degrees_by_node = degree_repo.get_degrees_by_node(neighbors_id)
-        node_pmids_length = ngd_repo.get_curies_pmid_length(neighbors_id)
+        with timings.timed("sqlite_degree_lookup"):
+            degrees_by_node = degree_repo.get_degrees_by_node(neighbors_id)
+        with timings.timed("sqlite_pmid_lookup"):
+            node_pmids_length = ngd_repo.get_curies_pmid_length(neighbors_id)
         content_by_curie = {item: {'pmids': 0, 'ngd': None, 'category': None, 'edges': {}} for item in neighbors_id}
         for curie_, degree_by_category in degrees_by_node.items():
             content_by_curie[curie_]['degree_by_category'] = degree_by_category

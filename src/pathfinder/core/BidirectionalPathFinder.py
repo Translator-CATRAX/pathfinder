@@ -9,10 +9,12 @@ from pathfinder.core.model.Edge import Edge
 from pathfinder.core.model.Path import Path
 from pathfinder.core.model.PathContainer import PathContainer
 from pathfinder.core.repo.repo_factory import get_repo
+from pathfinder.core.timing import Timings
 
 
 def run_bfs_process(hops_numbers, node_id, repo_args, prune_top_k, degree_threshold):
-    repo = get_repo(*repo_args)
+    timings = Timings()
+    repo = get_repo(*repo_args, timings=timings)
 
     path_container = PathContainer()
     path_queue = queue.Queue()
@@ -25,18 +27,20 @@ def run_bfs_process(hops_numbers, node_id, repo_args, prune_top_k, degree_thresh
 
     knowledge_graph = traverse(repo, path_queue, path_container, prune_top_k)
 
-    return path_container, knowledge_graph
+    return path_container, knowledge_graph, timings.snapshot()
 
 
 class BidirectionalPathFinder:
 
-    def __init__(self, repo_uri, ngd_url, degree_url, prune_top_k, degree_threshold, logger):
+    def __init__(self, repo_uri, ngd_url, degree_url, prune_top_k, degree_threshold, logger, xgb_nthread=None):
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
         self.prune_top_k = prune_top_k
         self.degree_threshold = degree_threshold
         self.logger = logger
+        self.xgb_nthread = xgb_nthread
+        self.timings = {}
 
 
     def find_all_paths(self, node_id_1, node_id_2, hops_numbers=1):
@@ -50,23 +54,30 @@ class BidirectionalPathFinder:
         hops_numbers_1 = math.floor((hops_numbers + 1) / 2)
         hops_numbers_2 = math.floor(hops_numbers / 2)
 
-        repo_args = (self.repo_uri, self.ngd_url, self.degree_url, self.degree_threshold)
+        repo_args = (self.repo_uri, self.ngd_url, self.degree_url, self.degree_threshold, self.xgb_nthread)
 
         with ProcessPoolExecutor(max_workers=2) as ex:
             f1 = ex.submit(run_bfs_process, hops_numbers_1, node_id_1, repo_args, self.prune_top_k, self.degree_threshold)
             f2 = ex.submit(run_bfs_process, hops_numbers_2, node_id_2, repo_args, self.prune_top_k, self.degree_threshold)
 
             try:
-                path_container_1, kg_1 = f1.result()
+                path_container_1, kg_1, timings_1 = f1.result()
             except Exception as e:
                 self.logger.error(f"Process 1 with curie id: {node_id_1} failed with exception: {e}")
-                path_container_1 = None
+                raise RuntimeError(
+                    f"BFS subprocess for {node_id_1} failed and cannot proceed: {e}"
+                ) from e
 
             try:
-                path_container_2, kg_2 = f2.result()
+                path_container_2, kg_2, timings_2 = f2.result()
             except Exception as e:
                 self.logger.error(f"Process 2 with curie id: {node_id_2} failed with exception: {e}")
-                path_container_2 = None
+                raise RuntimeError(
+                    f"BFS subprocess for {node_id_2} failed and cannot proceed: {e}"
+                ) from e
+
+        self.timings = Timings.merge_snapshots(timings_1, timings_2)
+        self.logger.info(Timings.format_report(self.timings))
 
         kg = self.aggregate_kg(kg_1, kg_2)
 

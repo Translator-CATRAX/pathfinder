@@ -30,11 +30,13 @@ def get_kg_repo(repo_uri, degree_repo, node_degree_threshold):
         raise ValueError(f"Unknown repo uri Starting with: '{repo_uri}'.")
 
 
-def get_repo(repo_uri, ngd_url, degree_url, node_degree_threshold):
+def get_repo(repo_uri, ngd_url, degree_url, node_degree_threshold, xgb_nthread=None, timings=None):
     degree_repo = get_degree_repo(degree_url)
     ngd_repo = get_ngd_repo(ngd_url)
     return MLRepo(
             get_kg_repo(repo_uri, degree_repo, node_degree_threshold),
             degree_repo,
-            ngd_repo
+            ngd_repo,
+            timings,
+            xgb_nthread
         )

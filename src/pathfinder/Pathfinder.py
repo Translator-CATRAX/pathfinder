@@ -16,7 +16,8 @@ class Pathfinder:
             degree_url: str,
             blocked_curies: Set[str],
             blocked_synonyms: Set[str],
-            logger
+            logger,
+            xgb_nthread: int = None
     ):
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
@@ -24,6 +25,8 @@ class Pathfinder:
         self.blocked_curies = blocked_curies
         self.blocked_synonyms = blocked_synonyms
         self.logger = logger
+        self.xgb_nthread = xgb_nthread
+        self.last_timings = {}
 
     def get_paths(
             self,
@@ -51,13 +54,15 @@ class Pathfinder:
             self.degree_url,
             prune_top_k,
             degree_threshold,
-            self.logger
+            self.logger,
+            self.xgb_nthread
         )
         paths, kg = path_finder.find_all_paths(
             src_node_id,
             dst_node_id,
             hops_numbers=max_hops_to_explore
         )
+        self.last_timings = path_finder.timings
 
         return self.post_paths_process(
             paths,

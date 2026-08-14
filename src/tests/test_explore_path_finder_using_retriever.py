@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 
 from pathfinder.Pathfinder import Pathfinder
+from pathfinder.core.timing import Timings
 from tests.test_utility import get_blocked_list, save_trapi_response
 
 HERE = Path(__file__).parent
@@ -46,6 +47,7 @@ def test_pathfinder():
     end_time = time.perf_counter()
     execution_time = end_time - start_time
     print(f"Executed in {execution_time:.6f} seconds")
+    print(Timings.format_report(pathfinder.last_timings))
     save_trapi_response(
         HERE / "explore_using_retriver.json",
         result,
