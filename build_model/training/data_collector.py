@@ -10,7 +10,7 @@ from pathfinder.core.feature_extractor import get_np_array_features
 from pathfinder.core.feature_extractor import get_concatenate_features
 from pathfinder.core.repo.NGDRepository import NGDRepository
 from pathfinder.core.repo.NodeDegreeRepo import NodeDegreeRepo
-from pathfinder.core.repo.GandalfRepo import GandalfRepo
+from GandalfRepo import GandalfRepo
 from tqdm import tqdm
 
 from constants import (node_degree_sqlite_prefix_name,
