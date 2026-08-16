@@ -11,6 +11,12 @@ build/
 *.egg-info/
 *.sqlite
 build_model/data/*.json
+build_model/gandalf/gandalf_mmap/*
+build_model/gandalf/edges.jsonl
+build_model/gandalf/nodes.jsonl
+build_model/gandalf/graph-metadata.json
+build_model/gandalf/gandalf_mmap_tier0-20260621.tar.gz
+build_model/gandalf/translator_kg.tar.zst
 
 # PyCharm / IntelliJ
 .idea/

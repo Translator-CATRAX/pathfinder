@@ -35,7 +35,7 @@ from db_build.download_script import ensure_downloaded_and_verified
 
 def split_data(train_percentage=0.8):
     logging.info(f"Split data to train size: {train_percentage}, and test size: {1 - train_percentage}")
-    with open('./build_model/data/DrugBank_aligned_with_KG2.json', 'r') as file:
+    with open('./build_model/data/DrugBank_aligned_with_KG2.filtered.json', 'r') as file:
         data = json.load(file)
     items = list(data.items())
 
@@ -66,7 +66,7 @@ def drugbank_data(data_source):
         with open('./build_model/data/testing.json', 'r') as file:
             data = json.load(file)
     elif data_source == DRUGBANK_DATA_SOURCE:
-        with open('./build_model/data/DrugBank_aligned_with_KG2.json', 'r') as file:
+        with open('./build_model/data/DrugBank_aligned_with_KG2.filtered.json', 'r') as file:
             data = json.load(file)
     else:
         raise ValueError(f"Data source does not exist: {data_source}")
@@ -260,7 +260,6 @@ def download_databases(
 ):
     node_degree_dbname = f"{node_degree_sqlite_prefix_name}{kg_version}.sqlite"
     curie_ngd_dbname = f"{curie_ngd_sqlite_prefix_name}{kg_version}.sqlite"
-    gandalf_mmap = f"{gandalf_mmap_prefix_name}{kg_version}.tar.gz"
     out_dir = pathlib.Path(out_dir_str)
 
     remote_path_node_degree_db = f"~/tier0-{kg_version}/{node_degree_dbname}"
@@ -286,20 +285,6 @@ def download_databases(
         key_path=key_path,
         password=password,
     )
-
-    remote_path_gandalf_mmap = f"~/tier0-{kg_version}/{gandalf_mmap}"
-    local_path_gandalf_mmap = out_dir / gandalf_mmap
-    downloaded = ensure_downloaded_and_verified(
-        host=host,
-        username=username,
-        port=port,
-        remote_path=remote_path_gandalf_mmap,
-        local_path=local_path_gandalf_mmap,
-        key_path=key_path,
-        password=password,
-    )
-    if downloaded:
-        extract_tar_gz(local_path_gandalf_mmap)
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -375,7 +360,6 @@ if __name__ == "__main__":
     args = parse_args()
     kg_version = args.kg_version
     data_source = DRUGBANK_DATA_SOURCE
-    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
     download_databases(
         kg_version=kg_version,
         host=args.db_host,
@@ -385,6 +369,8 @@ if __name__ == "__main__":
         password=args.ssh_password or os.getenv("SSH_PASSWORD"),
         out_dir_str=args.out_dir
     )
+    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+
     input_data = create_training_data(data_source)
     input_data = normalized_legacy_dataset(input_data)
 

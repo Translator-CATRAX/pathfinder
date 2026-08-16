@@ -25,7 +25,7 @@ class DataCollector:
         self.ngd_repo = NGDRepository(os.path.join(db_directory, f"{curie_ngd_sqlite_prefix_name}{kg_version}.sqlite"))
         self.output_directory = output_directory
         Path(output_directory).mkdir(parents=True, exist_ok=True)
-        self.repo = GandalfRepo(100000, f"{db_directory}/gandalf_mmap", self.node_degree_repo)
+        self.repo = GandalfRepo(100000, f"{db_directory}/build_model/gandalf/gandalf_mmap", self.node_degree_repo)
 
     def gather_data(self, input_data, feature_structure):
 
@@ -43,7 +43,7 @@ class DataCollector:
                 status=f"neighbors length: loading"
             )
             try:
-                content_by_curie, curie_name, curie_category = get_neighbors_info(
+                content_by_curie, curie_name, curie_category, knowledge_graph = get_neighbors_info(
                     key_nodes_pair[0],
                     self.ngd_repo,
                     self.repo,
