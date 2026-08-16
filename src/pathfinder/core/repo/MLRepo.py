@@ -46,7 +46,7 @@ class MLRepo:
             self.ancestors_by_id = pickle.load(f)
 
         self.bst_loaded = xgb.Booster()
-        self.bst_loaded.load_model(str(pkg_files.joinpath('pathfinder_xgboost_model_kg_20260408')))
+        self.bst_loaded.load_model(str(pkg_files.joinpath('pathfinder_xgboost_model_kg_20260621')))
 
     def get_edges(self, curie) -> tuple[list[Edge], dict[Any, Any]]:
         content_by_curie, curie_name, curie_category, knowledge_graph = get_neighbors_info(
