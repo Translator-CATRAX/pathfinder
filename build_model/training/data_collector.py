@@ -67,11 +67,13 @@ class DataCollector:
             curie_category_onehot = get_category(curie_category.split(":")[-1], feature_structure.category_to_idx)
             group.append(len(content_by_curie))
             curie.append(key_nodes_pair[0])
+            related_curies = key_nodes_pair[1]
+            is_scored = isinstance(related_curies, dict)
             for key, value in content_by_curie.items():
-                if key in key_nodes_pair[1]:
-                    y.append(1)
+                if is_scored:
+                    y.append(related_curies.get(key, 0))
                 else:
-                    y.append(0)
+                    y.append(1 if key in related_curies else 0)
 
                 curies.append(key)
                 ngd_val, pmid_val, cat_onehot, edge_categories, curie_category_onehot, node_degrees_feature = get_np_array_features(

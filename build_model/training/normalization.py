@@ -54,12 +54,25 @@ def normalized_legacy_dataset(input_data):
 
     result = []
     for key, value in input_data:
-        if key in normalized_node:
+        if key not in normalized_node:
+            continue
+
+        if isinstance(value, dict):
+            # value maps a related curie to its PMI-based rank score.
+            # Conflated curies keep the highest score they were given.
+            new_v = {}
+            for v, score in value.items():
+                if v in normalized_node:
+                    normalized_v = normalized_node[v]
+                    if normalized_v not in new_v or score > new_v[normalized_v]:
+                        new_v[normalized_v] = score
+        else:
             new_v = set()
             for v in value:
                 if v in normalized_node:
                     new_v.add(normalized_node[v])
-            result.append((normalized_node[key], new_v))
+
+        result.append((normalized_node[key], new_v))
     return result
 
 
