@@ -1,12 +1,15 @@
 import argparse
+import itertools
 import json
 import logging
+import math
 import os
 import pathlib
 import pickle
 import random
 import re
 import tarfile
+from collections import defaultdict
 from datetime import datetime
 
 import numpy as np
@@ -14,7 +17,6 @@ import xgboost as xgb
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from label_generator import binary_labels_to_importance_labels_converter
 from data_loader import load_data
 from biolink_helper_pkg import BiolinkHelper
 
@@ -58,6 +60,44 @@ def split_data(train_percentage=0.8):
     logging.info(f"Data split successfully")
 
 
+def compute_pairwise_pmi(documents):
+    """Computes pointwise mutual information for every pair of curies that
+    co-occurs in at least one document (a document is the basket of curies
+    belonging to a single drug's mechanistic pathway)."""
+    n_docs = len(documents)
+    doc_freq = defaultdict(int)
+    pair_freq = defaultdict(int)
+
+    for doc in documents:
+        for node in doc:
+            doc_freq[node] += 1
+        for a, b in itertools.combinations(sorted(doc), 2):
+            pair_freq[(a, b)] += 1
+
+    pmi_scores = {}
+    for (a, b), pair_count in pair_freq.items():
+        p_a = doc_freq[a] / n_docs
+        p_b = doc_freq[b] / n_docs
+        p_ab = pair_count / n_docs
+        pmi_scores[(a, b)] = math.log2(p_ab / (p_a * p_b))
+
+    return pmi_scores
+
+
+def get_pmi(pmi_scores, a, b):
+    key = (a, b) if a < b else (b, a)
+    return pmi_scores.get(key, 0.0)
+
+
+def merge_basket(training, key, related_curies, pmi_scores):
+    scored = {curie: max(get_pmi(pmi_scores, key, curie), 0.0)
+              for curie in related_curies if curie != key}
+    if key in training:
+        training[key].update(scored)
+    else:
+        training[key] = scored
+
+
 def drugbank_data(data_source):
     if data_source == DRUGBANK_TRAIN_DATA_SOURCE:
         with open('./build_model/data/training.json', 'r') as file:
@@ -76,35 +116,41 @@ def drugbank_data(data_source):
         diseases.update([k for k in value["indication_NER_aligned"].keys()])
         for mech, values in value["mechanistic_intermediate_nodes"].items():
             if values["category"] == "biolink:Disease":
-                diseases.update(mech)
+                diseases.add(mech)
 
-    training = {}
+    entries = []
+    documents = []
     for key, value in data.items():
-
         mechanistic_intermediate_nodes = [k for k in value["mechanistic_intermediate_nodes"].keys()]
         drug = key
 
         drug_nodes = set(mechanistic_intermediate_nodes) - diseases
-        if drug in training:
-            training[drug].update(drug_nodes)
-        else:
-            training[drug] = drug_nodes
-
         all_nodes = set(mechanistic_intermediate_nodes + [drug]) - diseases
+
+        entries.append((drug, mechanistic_intermediate_nodes, drug_nodes, all_nodes))
+        documents.append(all_nodes)
+
+    # Pointwise mutual information between every pair of curies that
+    # co-occur within a drug's mechanistic pathway (the basket).
+    pmi_scores = compute_pairwise_pmi(documents)
+
+    training = {}
+    for drug, mechanistic_intermediate_nodes, drug_nodes, all_nodes in entries:
+        merge_basket(training, drug, drug_nodes, pmi_scores)
+
         for mechanism in mechanistic_intermediate_nodes:
             if mechanism != drug:
                 batch = all_nodes.copy()
                 if mechanism in batch:
                     batch.remove(mechanism)
-                if mechanism in training:
-                    training[mechanism].update(batch)
-                else:
-                    training[mechanism] = batch
+                merge_basket(training, mechanism, batch, pmi_scores)
 
     result = []
 
-    for key, value in training.items():
-        result.append((key, value))
+    for key, related in training.items():
+        # Rank the merged basket of curies related to this key by PMI.
+        sorted_related = dict(sorted(related.items(), key=lambda item: item[1], reverse=True))
+        result.append((key, sorted_related))
 
     return result
 
@@ -382,6 +428,4 @@ if __name__ == "__main__":
     x, y, group = load_data(args.out_dir, data_source, shuffled=False)
     x, y, group = shuffle(x, y, group, args.out_dir, data_source)
 
-    updated_y = binary_labels_to_importance_labels_converter(x, y, feature_structure)
-
-    train(x, updated_y, group, kg_version)
+    train(x, y, group, kg_version)
