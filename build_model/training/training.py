@@ -399,9 +399,9 @@ def parse_args():
 
     parser.add_argument(
         "--label-threshold",
-        default=2.5,
+        default=4,
         type=float,
-        help="PMI labels below this value are zeroed out (default: 2.5)",
+        help="PMI labels below this value are zeroed out (default: 4)",
     )
 
     return parser.parse_args()
