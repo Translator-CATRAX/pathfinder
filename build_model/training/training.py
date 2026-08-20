@@ -209,6 +209,45 @@ def train(x, y, group, kg_version):
     logging.info("Training finished")
 
 
+def drop_zero_labels(x, y, group):
+    """Drops neighbors that never appeared in the DrugBank basket (label 0)
+    from every group. We have no signal on where an unseen neighbor would
+    rank, so we must not let rank:pairwise compare it against curies that
+    do have a PMI score - only PMI-scored neighbors are compared against
+    each other. Groups left with fewer than 2 scored neighbors are dropped
+    since they can't form a pairwise comparison."""
+    logging.info("Dropping zero-labeled neighbors")
+    group_start_indices = np.cumsum(np.insert(group, 0, 0))
+
+    new_x_list, new_y_list, new_group_list = [], [], []
+    dropped_groups = 0
+
+    for g in range(len(group)):
+        s = group_start_indices[g]
+        e = group_start_indices[g + 1]
+
+        mask = y[s:e] > 0
+        kept = int(mask.sum())
+
+        if kept < 2:
+            dropped_groups += 1
+            continue
+
+        new_x_list.append(x[s:e][mask])
+        new_y_list.append(y[s:e][mask])
+        new_group_list.append(kept)
+
+    x_filtered = np.vstack(new_x_list)
+    y_filtered = np.concatenate(new_y_list)
+    group_filtered = np.array(new_group_list)
+
+    logging.info(f"Dropped {dropped_groups} groups with fewer than 2 scored neighbors "
+                 f"(kept {len(group_filtered)} of {len(group)} groups)")
+    logging.info(f"Rows before: {len(y)}, rows after: {len(y_filtered)}")
+
+    return x_filtered, y_filtered, group_filtered
+
+
 def shuffle(x, y, group, output_dir, data_source):
     logging.info("Start shuffling")
     # ---- SHUFFLING BY GROUP ----
@@ -422,10 +461,11 @@ if __name__ == "__main__":
 
     logging.info(f"Training on {len(input_data)}")
 
-    DataCollector(kg_version, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
-        input_data, feature_structure)
+    # DataCollector(kg_version, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
+    #     input_data, feature_structure)
 
     x, y, group = load_data(args.out_dir, data_source, shuffled=False)
+    x, y, group = drop_zero_labels(x, y, group)
     x, y, group = shuffle(x, y, group, args.out_dir, data_source)
 
     train(x, y, group, kg_version)
