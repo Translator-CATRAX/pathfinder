@@ -445,21 +445,21 @@ if __name__ == "__main__":
     args = parse_args()
     kg_version = args.kg_version
     data_source = DRUGBANK_DATA_SOURCE
-    download_databases(
-        kg_version=kg_version,
-        host=args.db_host,
-        username=args.db_username,
-        port=args.db_port,
-        key_path=args.ssh_key,
-        password=args.ssh_password or os.getenv("SSH_PASSWORD"),
-        out_dir_str=args.out_dir
-    )
-    feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
-
-    input_data = create_training_data(data_source)
-    input_data = normalized_legacy_dataset(input_data)
-
-    logging.info(f"Training on {len(input_data)}")
+    # download_databases(
+    #     kg_version=kg_version,
+    #     host=args.db_host,
+    #     username=args.db_username,
+    #     port=args.db_port,
+    #     key_path=args.ssh_key,
+    #     password=args.ssh_password or os.getenv("SSH_PASSWORD"),
+    #     out_dir_str=args.out_dir
+    # )
+    # feature_structure = FeatureStructure(kg_version, args.out_dir, get_biolink_helper())
+    #
+    # input_data = create_training_data(data_source)
+    # input_data = normalized_legacy_dataset(input_data)
+    #
+    # logging.info(f"Training on {len(input_data)}")
 
     # DataCollector(kg_version, args.out_dir, os.path.join(args.out_dir, data_source)).gather_data(
     #     input_data, feature_structure)
