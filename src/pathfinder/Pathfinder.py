@@ -5,6 +5,7 @@ from pathfinder.converter.EdgeExtractorFromTRAPIResponse import EdgeExtractorFro
 from pathfinder.core.BidirectionalPathFinder import BidirectionalPathFinder
 from pathfinder.converter.ResultPerPathConverter import ResultPerPathConverter
 from pathfinder.core.ThreeHopsPathfinder import ThreeHopsPathfinder
+from pathfinder.telemetry import tracer
 
 
 class Pathfinder:
@@ -45,31 +46,43 @@ class Pathfinder:
         self.logger.info(f"Calling get_paths() from catrax-pathfinder version: {pkg_version}")
         if category_constraints is None:
             category_constraints = set()
-        path_finder = BidirectionalPathFinder(
-            self.repo_uri,
-            self.ngd_url,
-            self.degree_url,
-            prune_top_k,
-            degree_threshold,
-            self.logger
-        )
-        paths, kg = path_finder.find_all_paths(
-            src_node_id,
-            dst_node_id,
-            hops_numbers=max_hops_to_explore
-        )
+        with tracer.start_as_current_span(
+            "pathfinder.get_paths",
+            attributes={
+                "pathfinder.src_node_id": src_node_id,
+                "pathfinder.dst_node_id": dst_node_id,
+                "pathfinder.hops_numbers": hops_numbers,
+                "pathfinder.max_hops_to_explore": max_hops_to_explore,
+                "pathfinder.limit": limit,
+                "pathfinder.prune_top_k": prune_top_k,
+                "pathfinder.degree_threshold": degree_threshold,
+            },
+        ):
+            path_finder = BidirectionalPathFinder(
+                self.repo_uri,
+                self.ngd_url,
+                self.degree_url,
+                prune_top_k,
+                degree_threshold,
+                self.logger
+            )
+            paths, kg = path_finder.find_all_paths(
+                src_node_id,
+                dst_node_id,
+                hops_numbers=max_hops_to_explore
+            )
 
-        return self.post_paths_process(
-            paths,
-            src_node_id,
-            dst_node_id,
-            src_pinned_node,
-            dst_pinned_node,
-            hops_numbers,
-            limit,
-            category_constraints,
-            kg
-        )
+            return self.post_paths_process(
+                paths,
+                src_node_id,
+                dst_node_id,
+                src_pinned_node,
+                dst_pinned_node,
+                hops_numbers,
+                limit,
+                category_constraints,
+                kg
+            )
 
     def filter_with_constraint(self, paths, category_constraints):
         result = []
@@ -131,33 +144,43 @@ class Pathfinder:
 
         if category_constraints is None:
             category_constraints = set()
-        pathfinder = ThreeHopsPathfinder(
-            self.repo_uri,
-            self.ngd_url,
-            self.degree_url,
-            degree_threshold,
-            limit,
-            self.logger
-        )
-        paths, kg = pathfinder.find_three_hops_paths(
-            src_node_id,
-            dst_node_id,
-            src_pinned_node,
-            dst_pinned_node,
-            min_information_content
-        )
+        with tracer.start_as_current_span(
+            "pathfinder.get_three_hops_paths",
+            attributes={
+                "pathfinder.src_node_id": src_node_id,
+                "pathfinder.dst_node_id": dst_node_id,
+                "pathfinder.limit": limit,
+                "pathfinder.degree_threshold": degree_threshold,
+                "pathfinder.min_information_content": min_information_content,
+            },
+        ):
+            pathfinder = ThreeHopsPathfinder(
+                self.repo_uri,
+                self.ngd_url,
+                self.degree_url,
+                degree_threshold,
+                limit,
+                self.logger
+            )
+            paths, kg = pathfinder.find_three_hops_paths(
+                src_node_id,
+                dst_node_id,
+                src_pinned_node,
+                dst_pinned_node,
+                min_information_content
+            )
 
-        return self.post_paths_process(
-            paths,
-            src_node_id,
-            dst_node_id,
-            src_pinned_node,
-            dst_pinned_node,
-            3,
-            limit,
-            category_constraints,
-            kg
-        )
+            return self.post_paths_process(
+                paths,
+                src_node_id,
+                dst_node_id,
+                src_pinned_node,
+                dst_pinned_node,
+                3,
+                limit,
+                category_constraints,
+                kg
+            )
 
     def post_paths_process(
             self,
