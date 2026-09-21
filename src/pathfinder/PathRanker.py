@@ -8,6 +8,7 @@ from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Edge import Edge
 from pathfinder.core.model.Path import Path
 from pathfinder.core.repo.repo_factory import get_degree_repo, get_ngd_repo
+from pathfinder.telemetry import tracer
 
 
 class PathRanker:
@@ -18,6 +19,15 @@ class PathRanker:
         self.max_size = max_size
 
     def rank_path(self, pathfinder_response: dict) -> tuple[dict, list[Path]]:
+        with tracer.start_as_current_span(
+            "pathfinder.rank_path",
+            attributes={"pathfinder.max_size": self.max_size},
+        ) as span:
+            response, paths = self._rank_path(pathfinder_response)
+            span.set_attribute("pathfinder.path_count", len(paths))
+            return response, paths
+
+    def _rank_path(self, pathfinder_response: dict) -> tuple[dict, list[Path]]:
         local_repo = LocalRepo(pathfinder_response)
 
         nodes = {}

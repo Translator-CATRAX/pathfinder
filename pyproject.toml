@@ -5,12 +5,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "catrax-pathfinder"
-version = "2.4.3"
+version = "2.5.0"
 dependencies = [
     "numpy==1.26.4",
     "xgboost==2.1.4",
     "pandas==2.3.1",
-    "mysql-connector-python"
+    "mysql-connector-python",
+    "requests",
+    "opentelemetry-api>=1.27,<2"
 ]
 
 description = "Pathfinder is designed to identify semantic paths between two biological entities."
@@ -25,6 +27,13 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+otel = [
+    "opentelemetry-sdk>=1.27,<2",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27,<2",
+    "opentelemetry-instrumentation-requests>=0.48b0"
 ]
 
 [project.urls]
