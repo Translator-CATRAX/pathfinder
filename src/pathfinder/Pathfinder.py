@@ -17,7 +17,8 @@ class Pathfinder:
             degree_url: str,
             blocked_curies: Set[str],
             blocked_synonyms: Set[str],
-            logger
+            logger,
+            maturity: str
     ):
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
@@ -25,6 +26,7 @@ class Pathfinder:
         self.blocked_curies = blocked_curies
         self.blocked_synonyms = blocked_synonyms
         self.logger = logger
+        self.maturity = maturity
 
     def get_paths(
             self,
@@ -64,7 +66,8 @@ class Pathfinder:
                 self.degree_url,
                 prune_top_k,
                 degree_threshold,
-                self.logger
+                self.logger,
+                self.maturity
             )
             paths, kg = path_finder.find_all_paths(
                 src_node_id,
@@ -160,7 +163,8 @@ class Pathfinder:
                 self.degree_url,
                 degree_threshold,
                 limit,
-                self.logger
+                self.logger,
+                self.maturity
             )
             paths, kg = pathfinder.find_three_hops_paths(
                 src_node_id,

@@ -23,18 +23,18 @@ def get_degree_repo(degree_url):
     else:
         raise ValueError(f"Unknown ngd_url '{degree_url}'.")
 
-def get_kg_repo(repo_uri, degree_repo, node_degree_threshold):
+def get_kg_repo(repo_uri, degree_repo, node_degree_threshold, maturity):
     if repo_uri.startswith("retriever:"):
-        return RetrieverRepo(node_degree_threshold, retriever_path=repo_uri.removeprefix("retriever:"), degree_repo=degree_repo)
+        return RetrieverRepo(node_degree_threshold, retriever_path=repo_uri.removeprefix("retriever:"), degree_repo=degree_repo, maturity=maturity)
     else:
         raise ValueError(f"Unknown repo uri Starting with: '{repo_uri}'.")
 
 
-def get_repo(repo_uri, ngd_url, degree_url, node_degree_threshold):
+def get_repo(repo_uri, ngd_url, degree_url, node_degree_threshold, maturity):
     degree_repo = get_degree_repo(degree_url)
     ngd_repo = get_ngd_repo(ngd_url)
     return MLRepo(
-            get_kg_repo(repo_uri, degree_repo, node_degree_threshold),
+            get_kg_repo(repo_uri, degree_repo, node_degree_threshold, maturity),
             degree_repo,
             ngd_repo
         )

@@ -43,13 +43,14 @@ def run_bfs_process(hops_numbers, node_id, repo_args, prune_top_k, degree_thresh
 
 class BidirectionalPathFinder:
 
-    def __init__(self, repo_uri, ngd_url, degree_url, prune_top_k, degree_threshold, logger):
+    def __init__(self, repo_uri, ngd_url, degree_url, prune_top_k, degree_threshold, logger, maturity):
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
         self.prune_top_k = prune_top_k
         self.degree_threshold = degree_threshold
         self.logger = logger
+        self.maturity = maturity
 
 
     def find_all_paths(self, node_id_1, node_id_2, hops_numbers=1):
@@ -71,7 +72,7 @@ class BidirectionalPathFinder:
             hops_numbers_1 = math.floor((hops_numbers + 1) / 2)
             hops_numbers_2 = math.floor(hops_numbers / 2)
 
-            repo_args = (self.repo_uri, self.ngd_url, self.degree_url, self.degree_threshold)
+            repo_args = (self.repo_uri, self.ngd_url, self.degree_url, self.degree_threshold, self.maturity)
             otel_carrier = inject_context()
             with tracer.start_as_current_span("pathfinder.collect_bfs_results"):
                 with ProcessPoolExecutor(max_workers=2) as ex:

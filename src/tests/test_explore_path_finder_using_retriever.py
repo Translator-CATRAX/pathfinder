@@ -28,7 +28,8 @@ def test_pathfinder():
         f"sqlite:{kg2c_path}",
         blocked_curies,
         blocked_synonyms,
-        logger
+        logger,
+        "development"
     )
     start_time = time.perf_counter()
     result, aux_graphs, knowledge_graph = pathfinder.get_paths(

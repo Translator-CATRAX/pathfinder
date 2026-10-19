@@ -71,6 +71,7 @@ def test_get_paths_creates_span_and_nests_children(span_exporter):
             set(),
             set(),
             logger,
+            "development",
         )
         result = pathfinder.get_paths("A", "B", "n1", "n2")
 
@@ -86,7 +87,7 @@ def test_get_paths_creates_span_and_nests_children(span_exporter):
 
 def test_find_all_paths_same_node_short_circuits_but_still_spans(span_exporter):
     logger = logging.getLogger("tests.telemetry")
-    finder = BidirectionalPathFinder("retriever:http://unused", "sqlite:a", "sqlite:b", 30, 30000, logger)
+    finder = BidirectionalPathFinder("retriever:http://unused", "sqlite:a", "sqlite:b", 30, 30000, logger, "development")
     result = finder.find_all_paths("SAME", "SAME", hops_numbers=4)
 
     assert result == set()

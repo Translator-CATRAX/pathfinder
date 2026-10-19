@@ -47,7 +47,7 @@ def _executor_factory(results_by_node):
 
 def _finder():
     return BidirectionalPathFinder(
-        "retriever:http://unreachable", "sqlite:a", "sqlite:b", 30, 30000, LOGGER
+        "retriever:http://unreachable", "sqlite:a", "sqlite:b", 30, 30000, LOGGER, "development"
     )
 
 

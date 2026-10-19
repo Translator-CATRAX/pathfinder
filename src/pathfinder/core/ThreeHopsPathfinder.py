@@ -88,13 +88,14 @@ def get_1_hop_path(trapi_response, src_node_id, dst_node_id, src_pinned_node, ds
 
 class ThreeHopsPathfinder:
 
-    def __init__(self, repo_uri, ngd_url, degree_url, degree_threshold, limit, logger):
+    def __init__(self, repo_uri, ngd_url, degree_url, degree_threshold, limit, logger, maturity):
         self.repo_uri = repo_uri
         self.ngd_url = ngd_url
         self.degree_url = degree_url
         self.degree_threshold = degree_threshold
         self.limit = limit
         self.logger = logger
+        self.maturity = maturity
 
     def find_three_hops_paths(self, node_id_1, node_id_2, src_pinned_node, dst_pinned_node, min_information_content):
         self.logger.info("Three hops pathfinder started.")
@@ -144,7 +145,8 @@ class ThreeHopsPathfinder:
             repo = get_kg_repo(
                 self.repo_uri,
                 get_degree_repo(self.degree_url),
-                self.degree_threshold
+                self.degree_threshold,
+                self.maturity
             )
             with ThreadPoolExecutor(max_workers=3) as executor:
                 future_3_hops = submit_with_context(
