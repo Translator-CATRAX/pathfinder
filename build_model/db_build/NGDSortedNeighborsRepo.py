@@ -2,6 +2,8 @@ import math
 from NGDCalculator import calculate_ngd
 from RedisConnector import RedisConnector
 
+SHARED_PMIDS_CAP = 30
+
 
 class NGDSortedNeighborsRepo:
 
@@ -20,9 +22,10 @@ class NGDSortedNeighborsRepo:
             for pmid_length_pair, intersection in zip(nonzero_pmid_length, intersection_list):
                 ngd = calculate_ngd(log_of_node_pmids_length, pmid_length_pair[1], len(intersection), log_of_NGD_normalizer)
                 if ngd:
-                    ngd_key_value[pmid_length_pair[0]] = ngd
+                    shared = sorted(int(p) for p in intersection)[:SHARED_PMIDS_CAP]
+                    ngd_key_value[pmid_length_pair[0]] = (ngd, shared)
 
         sorted_neighbors = sorted(ngd_key_value.items(),
-                                  key=lambda x: (x[1] is None, x[1] if x[1] is not None else float('inf')))
+                                  key=lambda x: (x[1][0] is None, x[1][0] if x[1][0] is not None else float('inf')))
 
-        return sorted_neighbors
+        return [[curie, ngd, shared] for curie, (ngd, shared) in sorted_neighbors]

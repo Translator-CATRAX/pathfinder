@@ -1,6 +1,7 @@
-import ast
 import logging
 import sqlite3
+
+import numpy as np
 from tqdm import tqdm
 
 
@@ -31,8 +32,8 @@ def curie_pmids_into_memory(curie_to_pmids_path, version, redis_client):
 
         processed_in_batch = 0
 
-        for curie, pmids_str in cursor:
-            pmids = ast.literal_eval(pmids_str)
+        for curie, pmids_raw in cursor:
+            pmids = np.frombuffer(pmids_raw, dtype=np.int32).tolist()
             if pmids:
                 chunk_size = 10000
                 if len(pmids) > chunk_size:
