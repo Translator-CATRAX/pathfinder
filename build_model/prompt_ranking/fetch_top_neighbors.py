@@ -114,6 +114,8 @@ def main():
     ap.add_argument("--retriever", default="https://retriever.ci.transltr.io/query")
     ap.add_argument("--degree-threshold", type=int, default=30000,
                     help="Retriever max_node_degree (Pathfinder.get_paths default)")
+    ap.add_argument("--maturity", default="development",
+                    help="sent to the Retriever as submitter arax-pathfinder@<maturity>")
     ap.add_argument("--ngd-db", default=str(ROOT / "curie_ngd_v1.0_tier0-20260621.sqlite"))
     ap.add_argument("--degree-db", default=str(ROOT / "tier0-info-for-overlay_v1.0_tier0-20260621.sqlite"))
     args = ap.parse_args()
@@ -122,7 +124,8 @@ def main():
 
     degree_repo = get_degree_repo(f"sqlite:{args.degree_db}")
     ngd_repo = get_ngd_repo(f"sqlite:{args.ngd_db}")
-    kg_repo = CachingRepo(RetrieverRepo(args.degree_threshold, args.retriever, degree_repo))
+    kg_repo = CachingRepo(RetrieverRepo(args.degree_threshold, args.retriever, degree_repo,
+                                         args.maturity))
     ml_repo = MLRepo(kg_repo, degree_repo, ngd_repo)
     if args.model:
         ml_repo.bst_loaded = xgb.Booster()
