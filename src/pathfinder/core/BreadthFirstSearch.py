@@ -3,6 +3,7 @@ import concurrent.futures
 
 from pathfinder.core.model.Node import Node
 from pathfinder.core.model.Path import Path
+from pathfinder.telemetry import submit_with_context
 
 
 def process_path(path, repo, prune_top_k):
@@ -36,7 +37,7 @@ def traverse(repo, path_queue, path_container, prune_top_k):
                     paths.append(path_queue.get())
 
             futures = [
-                executor.submit(process_path, p, repo, prune_top_k)
+                submit_with_context(executor, process_path, p, repo, prune_top_k)
                 for p in paths
             ]
 

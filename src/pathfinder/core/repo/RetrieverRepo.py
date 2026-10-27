@@ -4,10 +4,11 @@ import requests
 
 class RetrieverRepo:
 
-    def __init__(self, node_degree_threshold, retriever_path, degree_repo):
+    def __init__(self, node_degree_threshold, retriever_path, degree_repo, maturity):
         self.node_degree_threshold = node_degree_threshold
         self.degree_repo = degree_repo
         self.retriever_path = retriever_path
+        self.maturity = maturity
 
     def get_neighbors_with_edges(self, curie):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -27,7 +28,8 @@ class RetrieverRepo:
                 "filter_config": {"max_node_degree": self.node_degree_threshold,
                                   "min_information_content": 69},
                 "tier": 0
-            }
+            },
+            "submitter": f"arax-pathfinder@{self.maturity}"
         }
 
         try:
@@ -186,7 +188,8 @@ class RetrieverRepo:
                 "filter_config": {"max_node_degree": self.node_degree_threshold,
                                   "min_information_content": min_information_content},
                 "tier": 0
-            }
+            },
+            "submitter": f"arax-pathfinder@{self.maturity}"
         }
 
         try:
@@ -240,7 +243,8 @@ class RetrieverRepo:
                 "filter_config": {"max_node_degree": self.node_degree_threshold,
                                   "min_information_content": min_information_content},
                 "tier": 0
-            }
+            },
+            "submitter": f"arax-pathfinder@{self.maturity}"
         }
 
         try:
@@ -287,7 +291,8 @@ class RetrieverRepo:
                 "filter_config": {"max_node_degree": self.node_degree_threshold,
                                   "min_information_content": min_information_content},
                 "tier": 0
-            }
+            },
+            "submitter": f"arax-pathfinder@{self.maturity}"
         }
 
         try:

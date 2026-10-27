@@ -15,7 +15,7 @@ def test_MLRepo_using_retriever():
     degree_repo = get_degree_repo(kg2c_path)
     ngd_repo = get_ngd_repo(ngd_path)
     ml_repo = MLRepo(
-        RetrieverRepo(5000, "https://retriever.ci.transltr.io/query", degree_repo),
+        RetrieverRepo(5000, "https://retriever.ci.transltr.io/query", degree_repo, "development"),
         degree_repo,
         ngd_repo
     )

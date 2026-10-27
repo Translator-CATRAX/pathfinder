@@ -174,4 +174,50 @@ Use `mysql:` followed by your MySQL config string.
 
 ---
 
+## Tracing (OpenTelemetry)
+
+`pathfinder` emits [OpenTelemetry](https://opentelemetry.io/) spans for its
+key phases (`get_paths`, `get_three_hops_paths`, `find_all_paths`,
+`find_three_hops_paths`, `rank_path`) via `trace.get_tracer("pathfinder")`.
+It only ever *reads* the current tracer provider — it never configures one
+in your process — so:
+
+- **Used inside an app that already configures an OTEL SDK** (e.g.
+  [Shepherd](https://github.com/BioPack-team/shepherd)): pathfinder's spans
+  just show up, nested under whatever span was active when you called
+  `get_paths`/`get_three_hops_paths`. If that app also instruments the
+  `requests` library (e.g. via `RequestsInstrumentor().instrument()`), the
+  Retriever HTTP calls in `RetrieverRepo` get their own client spans for free.
+- **Used standalone**: install the `otel` extra and point it at a collector:
+
+  ```bash
+  pip install "catrax-pathfinder[otel]"
+  export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+  ```
+
+  With that in place, pathfinder configures tracing itself where it has to:
+  `get_paths()` runs its bidirectional search in two child processes
+  (`ProcessPoolExecutor`), and a freshly spawned process shares no state with
+  its parent, so it can't just inherit whatever tracer provider your app set
+  up. pathfinder bootstraps a minimal one in each child (gated on
+  `OTEL_EXPORTER_OTLP_ENDPOINT` being set, so this is a no-op otherwise) and
+  propagates the parent span's context into it, so the Retriever calls made
+  from inside the search show up correctly nested under `get_paths` in your
+  trace viewer.
+
+  For quick local checks without a collector, set `PATHFINDER_OTEL_CONSOLE=1`
+  instead (or alongside `OTEL_EXPORTER_OTLP_ENDPOINT`) to print every span —
+  parent-process *and* the two `ProcessPoolExecutor` children's — as JSON to
+  stdout. Note that setting `PATHFINDER_OTEL_CONSOLE`/`OTEL_EXPORTER_OTLP_ENDPOINT`
+  only reaches those `ProcessPoolExecutor` children automatically; if *your*
+  app also configures its own `TracerProvider` in its main process, that's
+  still your app's job (mirroring `OTEL_EXPORTER_OTLP_ENDPOINT`/Shepherd's own
+  `setup_tracer()` — pathfinder never calls `set_tracer_provider()` itself
+  outside those spawned children).
+
+No environment variable set, no SDK installed ⇒ every span is a no-op with
+zero overhead — existing usage is unaffected.
+
+---
+
 
