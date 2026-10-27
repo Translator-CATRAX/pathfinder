@@ -24,7 +24,8 @@ class RetrieverRepo:
             "parameters": {
                 "subclass": False,
                 "dehydrated": True,
-                "filter_config": {"max_node_degree": self.node_degree_threshold},
+                "filter_config": {"max_node_degree": self.node_degree_threshold,
+                                  "min_information_content": 69},
                 "tier": 0
             }
         }

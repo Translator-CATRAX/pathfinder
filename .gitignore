@@ -10,15 +10,23 @@ data/
 build/
 *.egg-info/
 *.sqlite
-build_model/data/*.json
-build_model/gandalf/gandalf_mmap/*
-build_model/gandalf/edges.jsonl
-build_model/gandalf/nodes.jsonl
-build_model/gandalf/graph-metadata.json
-build_model/gandalf/gandalf_mmap_tier0-20260621.tar.gz
-build_model/gandalf/translator_kg.tar.zst
 
 # PyCharm / IntelliJ
 .idea/
 *.iml
 /biolink/
+
+# LLM-graded ranker data (backed up outside git)
+build_model/prompt_ranking/top_neighbors/
+build_model/prompt_ranking/pathfinder_results/
+build_model/prompt_ranking/neighbors_for_grading/
+build_model/prompt_ranking/graded_neighbors/
+build_model/prompt_ranking/models/pathfinder_xgboost_model_llm_kg_*
+src/pathfinder/resources/*.bak-*
+
+# macOS
+.DS_Store
+
+# Local scratch files
+/general_concepts.json
+src/tests/explore_using_retriver.json

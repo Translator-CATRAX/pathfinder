@@ -1,0 +1,8 @@
+# Python 3.12; run the scripts with PYTHONPATH=../../src
+anthropic>=1.1.0
+xgboost==2.1.4
+numpy
+requests
+tqdm
+node-synonymizer==0.1.1
+biolink-helper-pkg==1.0.0
