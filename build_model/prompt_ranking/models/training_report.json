@@ -1,0 +1,34 @@
+{
+  "trained_at": "2026-10-11T08:30:37",
+  "centers": 1761,
+  "neighbors": 87873,
+  "feature_length": 615,
+  "params": {
+    "objective": "rank:pairwise",
+    "eval_metric": "ndcg",
+    "eta": 0.1,
+    "max_depth": 15,
+    "subsample": 0.91,
+    "colsample_bytree": 0.84,
+    "min_child_weight": 1,
+    "gamma": 0.1
+  },
+  "num_boost_round": 500,
+  "validation": {
+    "ndcg@10": {
+      "new_model": 0.7303474303802439,
+      "production_model": 0.4712288076541378,
+      "random": 0.28048217655760027
+    },
+    "ndcg@30": {
+      "new_model": 0.8204445655268522,
+      "production_model": 0.6009688680014438,
+      "random": 0.44400347565242465
+    },
+    "ndcg@all": {
+      "new_model": 0.8587688914371021,
+      "production_model": 0.7169784014569061,
+      "random": 0.6114823178142931
+    }
+  }
+}
